@@ -126,33 +126,53 @@
     <div id="resumeWizardModal" class="fixed inset-0 bg-black/90 backdrop-blur-md z-[100] hidden flex flex-col items-center pt-10 px-4 overflow-y-auto">
         <div class="w-full max-w-3xl mb-4 flex justify-between items-center text-white">
             <h2 class="text-2xl font-display font-bold flex items-center gap-2"><span class="text-[#00f0ff]">✨</span> Pro Resume Builder</h2>
-            <button onclick="document.getElementById('resumeWizardModal').classList.add('hidden')" class="text-gray-400 hover:text-white text-3xl">&times;</button>
+            <div class="flex items-center gap-3">
+                <button onclick="runDemoResume()" class="px-5 py-2 rounded-xl bg-gradient-to-r from-[#00f0ff] to-[#7000ff] text-white text-xs font-extrabold hover:scale-105 transition-all shadow-[0_0_20px_rgba(0,240,255,0.3)] border-0">TRY DEMO ✨</button>
+                <button onclick="document.getElementById('resumeWizardModal').classList.add('hidden')" class="text-gray-400 hover:text-white text-3xl ml-2">&times;</button>
+            </div>
         </div>
         
         <div class="glass-panel w-full max-w-3xl rounded-3xl overflow-hidden relative flex flex-col mb-20 bg-[#0a0a0f]">
             <!-- Progress Bar -->
-            <div class="flex border-b border-white/10 text-xs font-bold uppercase tracking-wider text-gray-500 bg-white/5">
-                <div id="step1-tab" class="flex-1 text-center py-4 text-[#00f0ff] border-b-2 border-[#00f0ff]">1. Heading</div>
-                <div id="step2-tab" class="flex-1 text-center py-4">2. Summary</div>
-                <div id="step3-tab" class="flex-1 text-center py-4">3. Experience</div>
-                <div id="step4-tab" class="flex-1 text-center py-4">4. Education</div>
-                <div id="step5-tab" class="flex-1 text-center py-4">5. Skills</div>
+            <div class="flex border-b border-white/10 text-[10px] md:text-xs font-bold uppercase tracking-wider text-gray-500 bg-white/5 overflow-x-auto whitespace-nowrap">
+                <div id="step1-tab" class="px-4 md:flex-1 text-center py-4 text-[#00f0ff] border-b-2 border-[#00f0ff]">1. Heading</div>
+                <div id="step2-tab" class="px-4 md:flex-1 text-center py-4">2. Summary</div>
+                <div id="step3-tab" class="px-4 md:flex-1 text-center py-4">3. Experience</div>
+                <div id="step4-tab" class="px-4 md:flex-1 text-center py-4">4. Education</div>
+                <div id="step5-tab" class="px-4 md:flex-1 text-center py-4">5. Skills</div>
+            </div>
+
+            <!-- ATS Score Indicator -->
+            <div class="px-8 py-3 bg-[#00f0ff]/5 border-b border-white/5 flex justify-between items-center">
+                <div class="flex items-center gap-2">
+                    <span class="text-[10px] font-bold text-gray-400 uppercase tracking-widest">ATS Readiness Score:</span>
+                    <div class="h-1.5 w-24 bg-white/10 rounded-full overflow-hidden">
+                        <div id="atsProgress" class="h-full bg-gradient-to-r from-red-500 via-yellow-500 to-green-500 transition-all duration-1000" style="width: 20%"></div>
+                    </div>
+                </div>
+                <div id="atsScoreValue" class="text-sm font-bold text-[#00f0ff]">20%</div>
             </div>
 
             <div class="p-8" id="wizardForm">
                 
                 <!-- STEP 1: HEADING -->
                 <div id="step1" class="wizard-step">
-                    <h3 class="text-2xl font-bold mb-1">Let's start with your contact information.</h3>
-                    <p class="text-gray-400 text-sm mb-2">Employers need to know how to reach you. Be sure your email and phone are correct.</p>
-                    <p class="text-xs text-gray-500 mb-4">💡 Tip: Use a professional email address (not your party nickname!) and a phone with a clear voicemail.</p>
-                    <div class="grid grid-cols-2 gap-4">
+                    <div class="flex justify-between items-start mb-4">
+                        <div>
+                            <h3 class="text-xl md:text-2xl font-bold mb-1">Let's start with your contact information.</h3>
+                            <p class="text-gray-400 text-sm">Employers need to know how to reach you.</p>
+                        </div>
+                        <button onclick="runDemoResume()" class="hidden md:block px-4 py-2 rounded-xl bg-white/5 border border-white/10 text-[#00f0ff] text-[10px] font-bold hover:bg-white/10 transition-all uppercase tracking-wider">
+                            ⚡ Quick Magic Fill
+                        </button>
+                    </div>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
                         <div><label class="block text-xs font-semibold text-gray-400 mb-1">First Name</label><input type="text" id="wizFirstName" class="w-full skeu-input rounded-xl px-4 py-3 text-white" placeholder="John"></div>
                         <div><label class="block text-xs font-semibold text-gray-400 mb-1">Last Name</label><input type="text" id="wizLastName" class="w-full skeu-input rounded-xl px-4 py-3 text-white" placeholder="Doe"></div>
-                        <div><label class="block text-xs font-semibold text-gray-400 mb-1">Target Position/Role</label><input type="text" id="wizProfession" class="w-full skeu-input rounded-xl px-4 py-3 text-white" placeholder="e.g. Software Engineer, Data Analyst"></div>
+                        <div><label class="block text-xs font-semibold text-gray-400 mb-1">Target Position</label><input type="text" id="wizProfession" class="w-full skeu-input rounded-xl px-4 py-3 text-white" placeholder="e.g. Software Engineer"></div>
                         <div><label class="block text-xs font-semibold text-gray-400 mb-1">City, State</label><input type="text" id="wizLocation" class="w-full skeu-input rounded-xl px-4 py-3 text-white" placeholder="e.g. San Francisco, CA"></div>
                         <div><label class="block text-xs font-semibold text-gray-400 mb-1">Phone Number</label><input type="text" id="wizPhone" class="w-full skeu-input rounded-xl px-4 py-3 text-white" placeholder="(555) 123-4567"></div>
-                        <div><label class="block text-xs font-semibold text-gray-400 mb-1">Professional Email</label><input type="text" id="wizEmail" class="w-full skeu-input rounded-xl px-4 py-3 text-white" placeholder="john@example.com"></div>
+                        <div><label class="block text-xs font-semibold text-gray-400 mb-1">Email</label><input type="text" id="wizEmail" class="w-full skeu-input rounded-xl px-4 py-3 text-white" placeholder="john@example.com"></div>
                     </div>
                 </div>
 
@@ -166,28 +186,26 @@
 
                 <!-- STEP 3: EXPERIENCE -->
                 <div id="step3" class="wizard-step hidden">
-                    <h3 class="text-2xl font-bold mb-1">Tell us about your professional experience.</h3>
-                    <p class="text-gray-400 text-sm mb-2">Start with your most recent job or internship.</p>
-                    <p class="text-xs text-gray-500 mb-4">💡 Tip: Share what you did and the impact you made. Our AI will format it professionally!</p>
-                    <div class="grid grid-cols-2 gap-4 mb-4">
-                        <div><label class="block text-xs font-semibold text-gray-400 mb-1">Job Title</label><input type="text" id="wizJobTitle" class="w-full skeu-input rounded-xl px-4 py-3 text-white" placeholder="e.g., Junior Backend Developer"></div>
-                        <div><label class="block text-xs font-semibold text-gray-400 mb-1">Company</label><input type="text" id="wizEmployer" class="w-full skeu-input rounded-xl px-4 py-3 text-white" placeholder="e.g., TechCorp Inc."></div>
-                        <div><label class="block text-xs font-semibold text-gray-400 mb-1">Start Date (MM/YYYY)</label><input type="text" id="wizJobStart" class="w-full skeu-input rounded-xl px-4 py-3 text-white" placeholder="01/2023"></div>
-                        <div><label class="block text-xs font-semibold text-gray-400 mb-1">End Date (MM/YYYY or Present)</label><input type="text" id="wizJobEnd" class="w-full skeu-input rounded-xl px-4 py-3 text-white" placeholder="12/2023"></div>
+                    <h3 class="text-xl md:text-2xl font-bold mb-1">Professional experience.</h3>
+                    <p class="text-gray-400 text-sm mb-4">Start with your most recent job.</p>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                        <div><label class="block text-xs font-semibold text-gray-400 mb-1">Job Title</label><input type="text" id="wizJobTitle" class="w-full skeu-input rounded-xl px-4 py-3 text-white" placeholder="e.g., Backend Developer"></div>
+                        <div><label class="block text-xs font-semibold text-gray-400 mb-1">Company</label><input type="text" id="wizEmployer" class="w-full skeu-input rounded-xl px-4 py-3 text-white" placeholder="e.g., Google"></div>
+                        <div><label class="block text-xs font-semibold text-gray-400 mb-1">Start Date</label><input type="text" id="wizJobStart" class="w-full skeu-input rounded-xl px-4 py-3 text-white" placeholder="01/2023"></div>
+                        <div><label class="block text-xs font-semibold text-gray-400 mb-1">End Date</label><input type="text" id="wizJobEnd" class="w-full skeu-input rounded-xl px-4 py-3 text-white" placeholder="Present"></div>
                     </div>
-                    <label class="block text-xs font-semibold text-gray-400 mb-1">What did you accomplish? (Responsibilities, Projects, Results)</label>
-                    <textarea id="wizJobDesc" rows="4" placeholder="E.g., Developed REST APIs using Node.js and Express. Optimized database queries reducing response time by 40%. Led team of 3 on feature development." class="w-full skeu-input rounded-xl px-4 py-3 text-white leading-relaxed"></textarea>
+                    <label class="block text-xs font-semibold text-gray-400 mb-1">Achievements & Responsibilities</label>
+                    <textarea id="wizJobDesc" rows="4" placeholder="Briefly describe your impact..." class="w-full skeu-input rounded-xl px-4 py-3 text-white leading-relaxed"></textarea>
                 </div>
 
                 <!-- STEP 4: EDUCATION -->
                 <div id="step4" class="wizard-step hidden">
-                    <h3 class="text-2xl font-bold mb-1">Tell us about your education.</h3>
-                    <p class="text-gray-400 text-sm mb-2">Include your degree, university, and graduation year.</p>
-                    <p class="text-xs text-gray-500 mb-4">💡 Tip: Include any honors, GPA, or relevant coursework if impressive!</p>
-                    <div class="grid grid-cols-2 gap-4">
-                        <div><label class="block text-xs font-semibold text-gray-400 mb-1">University/School Name</label><input type="text" id="wizSchool" class="w-full skeu-input rounded-xl px-4 py-3 text-white" placeholder="e.g., MIT, Stanford"></div>
+                    <h3 class="text-xl md:text-2xl font-bold mb-1">Tell us about your education.</h3>
+                    <p class="text-gray-400 text-sm mb-4">Include your degree and university.</p>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
+                        <div><label class="block text-xs font-semibold text-gray-400 mb-1">University Name</label><input type="text" id="wizSchool" class="w-full skeu-input rounded-xl px-4 py-3 text-white" placeholder="e.g., MIT"></div>
                         <div><label class="block text-xs font-semibold text-gray-400 mb-1">Location</label><input type="text" id="wizSchoolLoc" class="w-full skeu-input rounded-xl px-4 py-3 text-white" placeholder="e.g., Cambridge, MA"></div>
-                        <div class="col-span-2"><label class="block text-xs font-semibold text-gray-400 mb-1">Degree (e.g., Bachelor of Science in Computer Science)</label><input type="text" id="wizDegreeFull" class="w-full skeu-input rounded-xl px-4 py-3 text-white" placeholder="B.S. in Computer Science"></div>
+                        <div class="md:col-span-2"><label class="block text-xs font-semibold text-gray-400 mb-1">Degree</label><input type="text" id="wizDegreeFull" class="w-full skeu-input rounded-xl px-4 py-3 text-white" placeholder="B.S. in Computer Science"></div>
                         <div><label class="block text-xs font-semibold text-gray-400 mb-1">Graduation Year</label><input type="text" id="wizGradYear" class="w-full skeu-input rounded-xl px-4 py-3 text-white" placeholder="2024"></div>
                     </div>
                 </div>
@@ -203,10 +221,28 @@
             </div>
 
             <!-- Footer Actions -->
-            <div class="p-6 border-t border-white/10 flex justify-between bg-black/40">
-                <button id="wizBackBtn" onclick="wizPrev()" class="px-6 py-3 rounded-xl bg-white/5 hover:bg-white/10 transition-colors font-bold invisible">Back</button>
-                <button id="wizNextBtn" onclick="wizNext()" class="skeu-btn-primary px-10 py-3 rounded-xl font-bold">Next</button>
-                <button id="wizFinishBtn" class="skeu-btn-primary px-10 py-3 rounded-xl font-bold hidden bg-gradient-to-r from-green-400 to-emerald-600">Finish & Generate</button>
+            <div class="p-4 md:p-6 border-t border-white/10 flex flex-col md:flex-row gap-4 justify-between bg-black/40">
+                <div class="flex gap-2">
+                    <button id="wizBackBtn" onclick="wizPrev()" class="px-6 py-3 rounded-xl bg-white/5 hover:bg-white/10 transition-colors font-bold invisible">Back</button>
+                    <button id="wizLatexBtn" onclick="toggleLatex()" class="px-6 py-3 rounded-xl bg-[#00f0ff]/10 text-[#00f0ff] border border-[#00f0ff]/20 font-bold hidden">Show LaTeX</button>
+                </div>
+                <div class="flex gap-2 w-full md:w-auto">
+                    <button id="wizNextBtn" onclick="wizNext()" class="skeu-btn-primary flex-1 md:flex-none px-10 py-3 rounded-xl font-bold">Next Step</button>
+                    <button id="wizFinishBtn" class="skeu-btn-primary flex-1 md:flex-none px-10 py-3 rounded-xl font-bold hidden bg-gradient-to-r from-green-400 to-emerald-600">Finish & Generate</button>
+                </div>
+            </div>
+            
+            <!-- LaTeX Source Overlay -->
+            <div id="latexOverlay" class="absolute inset-0 bg-[#030305] z-50 hidden flex flex-col p-6 overflow-hidden">
+                <div class="flex justify-between items-center mb-4">
+                    <h3 class="text-xl font-bold">LaTeX Source Code</h3>
+                    <button onclick="toggleLatex()" class="text-gray-400 hover:text-white text-2xl">&times;</button>
+                </div>
+                <p class="text-xs text-gray-400 mb-4">Copy this code into Overleaf or any LaTeX compiler for a high-end academic resume.</p>
+                <textarea id="latexSource" readonly class="flex-1 w-full bg-black/50 border border-white/10 rounded-xl p-4 font-mono text-xs text-[#00f0ff] focus:outline-none"></textarea>
+                <div class="mt-4 flex gap-2">
+                    <button onclick="copyLatex()" class="flex-1 py-3 rounded-xl bg-white/10 hover:bg-white/20 font-bold transition-colors">Copy Code</button>
+                </div>
             </div>
         </div>
     </div>
@@ -234,6 +270,51 @@
             } catch(e) {}
         }
         loadProfile();
+
+        // Handle Resume Upload directly from the Profile page
+        document.getElementById('resumeUpload').addEventListener('change', async function() {
+            if (!this.files[0]) return;
+            const statusSpan = document.getElementById('uploadStatus');
+            statusSpan.classList.remove('hidden');
+            
+            const fd = new FormData();
+            fd.append('resume', this.files[0]);
+            
+            try {
+                const token = localStorage.getItem('token');
+                const res = await fetch('/api/auth/upload-resume', {
+                    method: 'POST',
+                    headers: { 'Authorization': `Bearer ${token}` },
+                    body: fd
+                });
+                const data = await res.json();
+                
+                if (res.ok) {
+                    statusSpan.innerText = '✓ Success!';
+                    statusSpan.style.color = '#10b981';
+                    
+                    // Update UI with extracted data
+                    if (data.user && data.user.full_name) document.getElementById('fullName').value = data.user.full_name;
+                    if (data.role) document.getElementById('role').value = data.role;
+                    if (data.skills && data.skills.length) document.getElementById('skills').value = data.skills.join(', ');
+                    
+                    // Save session ID for resume logic
+                    if (data.user && data.user.session_id) localStorage.setItem('session_id', data.user.session_id);
+                    
+                    setTimeout(() => {
+                        statusSpan.classList.add('hidden');
+                        statusSpan.innerText = 'Uploading & Parsing...';
+                        statusSpan.style.color = '#00f0ff';
+                    }, 3000);
+                } else {
+                    statusSpan.innerText = data.error || 'Failed to upload';
+                    statusSpan.style.color = '#ef4444';
+                }
+            } catch (err) {
+                statusSpan.innerText = 'Network error';
+                statusSpan.style.color = '#ef4444';
+            }
+        });
 
         document.getElementById('saveBtn').addEventListener('click', async () => {
             const btn = document.getElementById('saveBtn');
@@ -309,7 +390,8 @@
 
         document.getElementById('wizFinishBtn').addEventListener('click', async () => {
             const btn = document.getElementById('wizFinishBtn');
-            btn.innerText = 'Generating Pro PDF...';
+            const originalText = btn.innerText;
+            btn.innerText = 'Creating ATS Resume...';
             btn.disabled = true;
 
             const payload = {
@@ -320,18 +402,15 @@
                 phone: document.getElementById('wizPhone').value,
                 email: document.getElementById('wizEmail').value,
                 summary: document.getElementById('wizSummary').value,
-                
                 jobTitle: document.getElementById('wizJobTitle').value,
                 employer: document.getElementById('wizEmployer').value,
                 jobStart: document.getElementById('wizJobStart').value,
                 jobEnd: document.getElementById('wizJobEnd').value,
                 jobDesc: document.getElementById('wizJobDesc').value,
-                
                 school: document.getElementById('wizSchool').value,
                 schoolLoc: document.getElementById('wizSchoolLoc').value,
                 degree: document.getElementById('wizDegreeFull').value,
                 gradYear: document.getElementById('wizGradYear').value,
-                
                 skills: document.getElementById('wizSkillsList').value
             };
 
@@ -343,26 +422,100 @@
                     body: JSON.stringify(payload)
                 });
                 
+                const data = await res.json();
                 if(res.ok) {
-                    btn.innerText = 'Resume Created!';
+                    btn.innerText = '✓ Generated!';
+                    
+                    if(data.latex) {
+                        document.getElementById('latexSource').value = data.latex;
+                        document.getElementById('wizLatexBtn').classList.remove('hidden');
+                    }
+
+                    // Show success toast or similar
                     downloadResume();
+                    
                     setTimeout(() => {
-                        document.getElementById('resumeWizardModal').classList.add('hidden');
-                        btn.innerText = 'Finish & Generate';
+                        btn.innerText = originalText;
                         btn.disabled = false;
-                        window.location.reload(); 
-                    }, 1500);
+                        // Don't close immediately so user can see LaTeX if they want
+                    }, 2000);
                 } else {
-                    throw new Error('Failed to generate resume');
+                    throw new Error(data.error || 'Failed');
                 }
             } catch(e) {
-                btn.innerText = 'Error Generating';
+                btn.innerText = 'Error: ' + e.message;
                 setTimeout(() => {
-                    btn.innerText = 'Finish & Generate';
+                    btn.innerText = originalText;
                     btn.disabled = false;
-                }, 2000);
+                }, 3000);
             }
         });
+
+        // Live ATS Score Simulator
+        const inputs = ['wizSummary', 'wizJobDesc', 'wizSkillsList', 'wizFirstName'];
+        inputs.forEach(id => {
+            document.getElementById(id).addEventListener('input', updateAtsPreview);
+        });
+
+        function updateAtsPreview() {
+            let score = 20;
+            if(document.getElementById('wizSummary').value.length > 50) score += 20;
+            if(document.getElementById('wizJobDesc').value.length > 50) score += 20;
+            const skills = document.getElementById('wizSkillsList').value.split(',').filter(s => s.trim().length > 2);
+            score += Math.min(30, skills.length * 3);
+            if(document.getElementById('wizDegreeFull').value) score += 10;
+            
+            score = Math.min(98, score);
+            document.getElementById('atsProgress').style.width = score + '%';
+            document.getElementById('atsScoreValue').innerText = score + '%';
+        }
+
+        window.toggleLatex = function() {
+            document.getElementById('latexOverlay').classList.toggle('hidden');
+        }
+
+        window.copyLatex = function() {
+            const copyText = document.getElementById('latexSource');
+            copyText.select();
+            document.execCommand("copy");
+            alert("LaTeX Code Copied!");
+        }
+
+        window.runDemoResume = function() {
+            // Sample Data
+            const demoData = {
+                firstName: "Alex",
+                lastName: "Sterling",
+                profession: "Full Stack Software Engineer",
+                location: "New York, NY",
+                phone: "(555) 012-3456",
+                email: "alex.sterling.dev@example.com",
+                summary: "Innovative Full Stack Engineer with 4+ years of experience in architecting scalable web applications. Expert in React, Node.js, and Cloud Architecture with a proven track record of optimizing system performance by 40% and leading cross-functional teams to deliver high-impact digital products.",
+                jobTitle: "Senior Software Engineer",
+                employer: "Nexus Innovations",
+                jobStart: "06/2021",
+                jobEnd: "Present",
+                jobDesc: "Architected a real-time analytics dashboard using React and GraphQL, serving 50k+ active users. Optimized PostgreSQL query performance reducing latency by 65%. Mentored a team of 5 junior developers and implemented automated CI/CD pipelines using GitHub Actions.",
+                school: "Columbia University",
+                schoolLoc: "New York, NY",
+                degree: "B.S. in Computer Science",
+                gradYear: "2021",
+                skills: "React, Node.js, TypeScript, Python, AWS (S3, EC2, Lambda), PostgreSQL, MongoDB, GraphQL, Docker, Kubernetes, CI/CD, Agile Methodology, System Design"
+            };
+
+            // Fill Form
+            Object.keys(demoData).forEach(key => {
+                const id = 'wiz' + key.charAt(0).toUpperCase() + key.slice(1);
+                const el = document.getElementById(id);
+                if(el) el.value = demoData[key];
+            });
+
+            // Update ATS UI
+            updateAtsPreview();
+
+            // Trigger Generate
+            document.getElementById('wizFinishBtn').click();
+        }
 
         function downloadResume() {
             const token = localStorage.getItem('token');

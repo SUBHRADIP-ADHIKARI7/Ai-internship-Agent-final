@@ -1,7 +1,8 @@
 <!DOCTYPE html>
 <html lang="en">
-<head>\n<script src="https://cdn.tailwindcss.com"></script>
-\n<script>
+<head>
+<script src="https://cdn.tailwindcss.com"></script>
+<script>
     tailwind.config = {
         theme: {
             extend: {
@@ -10,8 +11,9 @@
             }
         }
     }
-</script>\n<script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/ScrollTrigger.min.js"></script>\n
+</script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/ScrollTrigger.min.js"></script>
 <style>
     body { background: #030305; color: #fff; overflow-x: hidden; }
     .glass-panel {
@@ -528,6 +530,52 @@
         }
         .apply-btn:hover { transform: scale(1.06); box-shadow: 0 4px 20px rgba(124, 106, 255, 0.35); }
 
+        .ats-btn {
+            background: rgba(124, 106, 255, 0.08);
+            color: var(--accent-1);
+            border: 1px solid rgba(124, 106, 255, 0.3);
+            padding: 7px 16px; border-radius: 20px;
+            font-size: 11px; font-weight: 700; cursor: pointer;
+            transition: var(--transition);
+            text-transform: uppercase;
+        }
+        .ats-btn:hover { background: var(--accent-1); color: #fff; border-color: var(--accent-1); }
+
+        /* ATS Modal */
+        .modal-overlay {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(8, 8, 16, 0.85); display: none; place-items: center;
+            z-index: 2000; backdrop-filter: blur(12px);
+            animation: fadeIn 0.3s ease;
+        }
+        .modal-overlay.visible { display: grid; }
+        .modal-content {
+            background: #111122; border: 1px solid rgba(255,255,255,0.08);
+            border-radius: 28px; width: 92%; max-width: 520px;
+            padding: 30px; box-shadow: 0 30px 80px rgba(0,0,0,0.5);
+            max-height: 85vh; overflow-y: auto; position: relative;
+            animation: slideUp 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+        .modal-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px; }
+        .modal-title { font-size: 22px; font-weight: 700; color: #fff; }
+        .modal-close { cursor: pointer; font-size: 24px; color: var(--text-muted); transition: 0.2s; }
+        .modal-close:hover { color: #fff; transform: rotate(90deg); }
+
+        .ats-grid { display: flex; flex-direction: column; gap: 20px; }
+        .ats-score-box { text-align: center; padding: 20px; background: rgba(255,255,255,0.03); border-radius: 20px; }
+        .ats-circle {
+            width: 84px; height: 84px; border-radius: 50%;
+            border: 5px solid var(--accent-1); display: grid; place-items: center;
+            font-size: 24px; font-weight: 800; color: #fff; margin: 0 auto 12px;
+            box-shadow: 0 0 20px rgba(124, 106, 255, 0.3);
+        }
+        .ats-level { font-size: 14px; font-weight: 600; color: var(--accent-1); text-transform: uppercase; }
+        .ats-section-title { font-size: 14px; font-weight: 700; color: #fff; margin-bottom: 10px; display: flex; align-items: center; gap: 8px; }
+        .ats-list { list-style: none; padding: 0; margin: 0; }
+        .ats-list li { font-size: 13px; color: var(--text-secondary); margin-bottom: 6px; padding-left: 18px; position: relative; }
+        .ats-list li::before { content: '•'; position: absolute; left: 0; color: var(--accent-1); font-weight: 800; }
+        .ats-verdict { font-size: 13.5px; line-height: 1.6; color: var(--text-muted); padding: 16px; background: rgba(124,106,255,0.05); border-left: 3px solid var(--accent-1); border-radius: 4px; }
+
         /* ═══════════════════════════════════════
            TYPING INDICATOR
            ═══════════════════════════════════════ */
@@ -763,6 +811,35 @@
         }
     </style>
     <script src="https://download.agora.io/sdk/release/AgoraRTC_N.js"></script>
+
+<script>
+  // ── Force all background videos to play instantly ──
+  (function() {
+    function forcePlay(v) {
+      v.muted = true;
+      v.playsInline = true;
+      v.preload = 'auto';
+      var p = v.play();
+      if (p && typeof p.catch === 'function') {
+        p.catch(function() { v.load(); v.play(); });
+      }
+    }
+    function initVideos() {
+      document.querySelectorAll('video').forEach(forcePlay);
+    }
+    if (document.readyState === 'loading') {
+      document.addEventListener('DOMContentLoaded', initVideos);
+    } else {
+      initVideos();
+    }
+    // Retry once window is fully loaded in case of slow network
+    window.addEventListener('load', function() {
+      document.querySelectorAll('video').forEach(function(v) {
+        if (v.paused) forcePlay(v);
+      });
+    });
+  })();
+</script>
 </head>
 <body>
 
@@ -770,10 +847,14 @@
         <div id="avatar-video"></div>
     </div>
 
-    <div class="bg-grid"></div>
-    <div class="bg-orb bg-orb-1"></div>
-    <div class="bg-orb bg-orb-2"></div>
-    <div class="bg-orb bg-orb-3"></div>
+    <div style="position:fixed; inset:0; z-index:0; overflow:hidden; pointer-events:none;">
+        <video preload="auto" autoplay loop muted playsinline style="width:100%; height:100%; object-fit:cover; opacity:0.1; filter:blur(4px); will-change:transform">
+            <source src="/images/bot_bg_v3.mp4" type="video/mp4">
+        </video>
+    </div>
+
+    <!-- Global Hidden File Input -->
+    <input type="file" id="hiddenFileInput" accept=".pdf" style="display:none" onchange="handleNewResumeUpload(this)">
 
     <div class="app">
 
@@ -800,11 +881,18 @@
                 <h2>AI Internship Finder</h2>
                 <p>Search for internships, get AI-powered recommendations, or practice your interview skills!</p>
 
-                <!-- Welcome Upload Zone -->
+                <!-- Welcome Upload Zone (Analyze Saved) -->
                 <div class="welcome-upload" onclick="analyzeSavedResume()">
                     <div class="welcome-upload-icon">✅</div>
                     <div class="welcome-upload-title">Analyze Saved Resume</div>
                     <div class="welcome-upload-sub">We'll use your stored resume to find matching internships instantly</div>
+                </div>
+
+                <!-- Welcome Upload Zone (Upload New) -->
+                <div class="welcome-upload" style="margin-top: 10px; border-style: solid; border-color: var(--accent-1);" onclick="document.getElementById('hiddenFileInput').click()">
+                    <div class="welcome-upload-icon">📎</div>
+                    <div class="welcome-upload-title">Upload New Resume</div>
+                    <div class="welcome-upload-sub">Upload a new PDF to get updated recommendations</div>
                 </div>
 
                 <!-- Mock Interview Button -->
@@ -840,8 +928,25 @@
             </div>
             <div class="input-wrap">
                 <input type="text" id="chatInput" placeholder="Ask about internships, skills, locations..." autocomplete="off">
-                <button class="btn-upload-sm" title="Analyze Saved Resume" onclick="analyzeSavedResume()">✅</button>
+                <button class="btn-upload-sm" title="Upload New Resume" onclick="document.getElementById('hiddenFileInput').click()">📎</button>
                 <button class="btn-send" id="sendBtn" onclick="sendChat()" title="Send">➤</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- ATS Modal -->
+    <div class="modal-overlay" id="atsModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <div class="modal-title">ATS Match Analysis</div>
+                <div class="modal-close" onclick="closeAtsModal()">×</div>
+            </div>
+            <div id="atsResult" class="ats-grid">
+                <!-- Content injected via JS -->
+                <div style="text-align:center; padding: 40px;">
+                    <div class="spinner" style="margin: 0 auto 15px;"></div>
+                    <p style="color:var(--text-muted)">Analysing match with your resume...</p>
+                </div>
             </div>
         </div>
     </div>
@@ -860,9 +965,71 @@
 
         const welcomeUploadZone = document.querySelector('.welcome-upload');
 
+        window.handleNewResumeUpload = async function(input) {
+            const file = input.files[0];
+            if(!file) return;
+
+            hideWelcome();
+            addMsg(`📎 <strong>Uploading and analyzing "${file.name}"...</strong>`, 'ai');
+            setBusy(true);
+
+            const form = new FormData();
+            form.append('resume', file);
+            form.append('fast', 'true'); // Faster initial scan
+            const sid = localStorage.getItem('session_id') || ('sess_' + Date.now());
+            form.append('session_id', sid);
+
+            try {
+                const token = localStorage.getItem('token') || '';
+                const res = await fetch('/api/dashboard/analyze-resume', {
+                    method: 'POST',
+                    headers: { 'Authorization': 'Bearer ' + token },
+                    body: form
+                });
+
+                if (!res.ok) throw new Error(await res.text());
+
+                const data = await res.json();
+                if (data.session_id) {
+                    localStorage.setItem('session_id', data.session_id);
+                }
+
+                if (data.error) {
+                    addMsg(`❌ <strong>Upload Issue:</strong> ${data.error}`, 'ai');
+                    toast(data.error, 'error');
+                } else {
+                    const skills = (data.skills || []).slice(0, 10).join(', ');
+                    const role   = data.role || 'Software Engineer';
+                    
+                    addMsg(
+                        `✨ <strong>Resume processed successfully!</strong><br>` +
+                        `🎯 <strong>Target Role:</strong> ${role}<br>` +
+                        `🧠 <strong>Key Skills:</strong> ${skills}<br><br>` +
+                        `I'm now finding the best internships for you...`,
+                        'ai'
+                    );
+
+                    const query = `Find internships for a ${role} who knows: ${skills}`;
+                    chatInput.value = query;
+                    await sendChat();
+                }
+            } catch (err) {
+                console.error('[Bot Resume Upload]', err);
+                addMsg(`❌ <strong>Upload failed:</strong> ${err.message}`, 'ai');
+                toast('Upload failed', 'error');
+            } finally {
+                setBusy(false);
+                input.value = ''; // Reset input
+            }
+        };
+
         window.analyzeSavedResume = async function() {
             const sid = localStorage.getItem('session_id');
-            if(!sid) { toast('No saved resume found. Please log in again.', 'error'); return; }
+            if(!sid) { 
+                toast('No saved resume found. Please upload one.', 'warning'); 
+                document.getElementById('hiddenFileInput').click();
+                return; 
+            }
 
             hideWelcome();
             addMsg(`📄 <strong>Analysing your saved resume...</strong>`, 'ai');
@@ -870,6 +1037,7 @@
 
             const form = new FormData();
             form.append('session_id', sid);
+            form.append('fast', 'true'); // Faster initial scan
 
             try {
                 const token = localStorage.getItem('token') || '';
@@ -990,28 +1158,55 @@
             if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendChat(); }
         });
 
-        window.sendChat = async function() {
-            let txt = chatInput.value.trim();
+        let lastSearchQuery = '';
+
+        window.triggerFilterUpdate = function() {
+            if (lastSearchQuery && !busy) {
+                toast('Updating results for ' + lastSearchQuery + '...', 'info');
+                sendChat(lastSearchQuery, true); // true = silent/background update
+            }
+        };
+
+        window.sendChat = async function(overrideTxt = null, silent = false) {
+            let inputTxt = chatInput.value.trim();
+            let txt = (overrideTxt || inputTxt).trim();
+            
+            // If input is empty, check if we can re-run the last search with new filters
+            if (!txt && lastSearchQuery) {
+                txt = lastSearchQuery;
+                silent = true; // Use silent mode for "Refresh" feel
+            }
+
             if (!txt || busy) return;
 
-            // Append selected platforms if not all are selected
+            // Append selected platforms
             const platformCheckboxes = document.querySelectorAll('.platform-chip input[type="checkbox"]');
+            let selectedPlatforms = [];
             if (platformCheckboxes.length > 0) {
-                const selected = Array.from(platformCheckboxes).filter(cb => cb.checked).map(cb => cb.value);
+                selectedPlatforms = Array.from(platformCheckboxes).filter(cb => cb.checked).map(cb => cb.value);
                 const all = Array.from(platformCheckboxes).map(cb => cb.value);
-                if (selected.length === 0) {
-                    toast('Please select at least one search platform above the input box.', 'error');
+                
+                if (selectedPlatforms.length === 0) {
+                    toast('Please select at least one search platform.', 'error');
                     return;
                 }
-                // Only append if the message is actually requesting a search and user filtered platforms
-                if (selected.length < all.length && (txt.toLowerCase().includes('internship') || txt.toLowerCase().includes('job') || txt.toLowerCase().includes('find'))) {
-                    txt += " on " + selected.join(", ");
+                
+                // Track if this is a search query
+                const isSearch = /internship|job|find|search|match|career|role/i.test(txt);
+                if (isSearch) {
+                    lastSearchQuery = txt.replace(/ on .*/, ''); // Store base query
+                    if (selectedPlatforms.length < all.length) {
+                        txt = `${lastSearchQuery} on ${selectedPlatforms.join(", ")}`;
+                    }
                 }
             }
 
-            hideWelcome();
-            addMsg(txt, 'user');
-            chatInput.value = '';
+            if (!silent) {
+                hideWelcome();
+                addMsg(txt, 'user');
+                chatInput.value = '';
+            }
+            
             setBusy(true);
 
             try {
@@ -1026,11 +1221,19 @@
                 });
                 const data = await res.json();
                 if (data.status === 'success') {
+                    if (silent) {
+                        // For silent updates, we add a divider
+                        addMsg(`🔄 <strong>Results filtered for:</strong> ${selectedPlatforms.join(', ').toUpperCase()}`, 'ai');
+                    }
                     addMsg(data.response, 'ai');
-                    speak(data.response);
-                } else { addMsg('Something went wrong. Please try again! 😔', 'ai'); toast(data.error); }
-            } catch {
-                addMsg("Can't reach the server. Make sure it's running! 🔌", 'ai');
+                    if (!silent) speak(data.response);
+                } else { 
+                    addMsg('Something went wrong. Please try again!', 'ai'); 
+                    toast(data.error); 
+                }
+            } catch (err) {
+                console.error(err);
+                addMsg("Can't reach the server. Make sure it's running!", 'ai');
                 toast('Connection failed');
             }
 
@@ -1134,7 +1337,7 @@
                     ${j.description ? `<div class="card-desc">${j.description}</div>` : ''}
                     <div class="card-skills">${tags}</div>
                     <div class="card-foot">
-                        <span class="card-deadline">⏰ Deadline: ${dl}</span>
+                        <button class="ats-btn" onclick="checkATS(this, '${(j.title||'').replace(/'/g,"\\'")}', '${(j.description||'').replace(/'/g,"\\'").substring(0,300)}')">Check Match</button>
                         <a href="${j.apply_link||'#'}" target="_blank" class="apply-btn">Apply →</a>
                     </div>
                 </div>`;
@@ -1156,6 +1359,81 @@
         function hideWelcome() {
             if (welcomeScreen) welcomeScreen.style.display = 'none';
         }
+
+        // ═══════════════════════════════════════
+        // ATS ANALYSIS
+        // ═══════════════════════════════════════
+        window.checkATS = async function(btn, title, desc) {
+            const sid = SID;
+            if(!sid) {
+                toast('Please upload your resume first!', 'warning');
+                return;
+            }
+
+            const modal = document.getElementById('atsModal');
+            const resultBox = document.getElementById('atsResult');
+            
+            modal.classList.add('visible');
+            resultBox.innerHTML = `
+                <div style="text-align:center; padding: 40px;">
+                    <div class="spinner" style="margin: 0 auto 15px;"></div>
+                    <p style="color:var(--text-muted)">Comparing <strong>${title}</strong> with your profile...</p>
+                </div>
+            `;
+
+            try {
+                const token = localStorage.getItem('token') || '';
+                const res = await fetch('/api/bot/check-ats', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token },
+                    body: JSON.stringify({ session_id: sid, job_title: title, job_description: desc })
+                });
+                
+                const data = await res.json();
+                if(data.error) {
+                    resultBox.innerHTML = `<div style="text-align:center; padding:20px; color:#ff5c5c;">${data.error}</div>`;
+                    return;
+                }
+
+                resultBox.innerHTML = `
+                    <div class="ats-score-box">
+                        <div class="ats-circle">${data.match_score}%</div>
+                        <div class="ats-level">${data.match_level}</div>
+                    </div>
+                    
+                    <div>
+                        <div class="ats-section-title">⭐ Key Strengths</div>
+                        <ul class="ats-list">
+                            ${(data.strengths||[]).map(s => `<li>${s}</li>`).join('')}
+                        </ul>
+                    </div>
+
+                    <div>
+                        <div class="ats-section-title">🔍 Missing Keywords</div>
+                        <div style="display:flex; flex-wrap:wrap; gap:6px;">
+                            ${(data.missing_keywords||[]).map(k => `<span class="skill-pill" style="background:rgba(255,92,92,0.1); color:#ff5c5c; border-color:rgba(255,92,92,0.2)">${k}</span>`).join('')}
+                        </div>
+                    </div>
+
+                    <div>
+                        <div class="ats-section-title">💡 How to Improve Score</div>
+                        <ul class="ats-list">
+                            ${(data.improvements||[]).map(i => `<li>${i}</li>`).join('')}
+                        </ul>
+                    </div>
+
+                    <div class="ats-verdict">
+                        <strong>AI Verdict:</strong> ${data.verdict}
+                    </div>
+                `;
+            } catch (err) {
+                resultBox.innerHTML = `<div style="text-align:center; padding:20px; color:#ff5c5c;">Failed to reach AI server.</div>`;
+            }
+        };
+
+        window.closeAtsModal = function() {
+            document.getElementById('atsModal').classList.remove('visible');
+        };
 
         function scroll() {
             requestAnimationFrame(() => { chatArea.scrollTop = chatArea.scrollHeight; });

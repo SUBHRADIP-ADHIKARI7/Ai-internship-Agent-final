@@ -24,12 +24,67 @@ from dotenv import load_dotenv
 from PyPDF2 import PdfReader
 from fpdf import FPDF
 import docx as docx_lib
+from email_validator import validate_email, EmailNotValidError
 
-# from langchain_core.messages import HumanMessage, AIMessage, SystemMessage
-# from langgraph.prebuilt import create_react_agent
+def _validate_email_deep(email):
+    """
+    Perform deep validation of an email:
+    1. Syntax check
+    2. DNS MX record check (does the domain exist and have a mail server?)
+    """
+    try:
+        # check_deliverability=True performs the DNS MX record check
+        valid = validate_email(email, check_deliverability=True, timeout=10)
+        return True, valid.email
+    except EmailNotValidError as e:
+        return False, str(e)
+
+from pdf2image import convert_from_bytes
+import base64
+
+from langchain_core.messages import HumanMessage, AIMessage, SystemMessage
+
+def _safety_check_resume(resume_bytes):
+    """Analyze resume for inappropriate images or content using Gemini Vision. Returns (is_safe, reason)."""
+    llm_instance = get_llm()
+    if not llm_instance:
+        return True, "Safe (AI Skip)"
+        
+    try:
+        # Only check the first page for speed and token efficiency
+        images = convert_from_bytes(resume_bytes, first_page=1, last_page=1)
+        if not images:
+            return True, "No images"
+
+        # Encode first page to base64
+        import io
+        img_byte_arr = io.BytesIO()
+        images[0].save(img_byte_arr, format='JPEG', quality=80)
+        base64_image = base64.b64encode(img_byte_arr.getvalue()).decode('utf-8')
+
+        prompt = "Analyze this document image. Does it contain any inappropriate content, violent imagery, or random non-professional 'violated objects' that don't belong in a resume? Answer ONLY 'SAFE' or 'VIOLATED: <reason>'."
+        
+        # Multimodal message for Gemini
+        message = HumanMessage(
+            content=[
+                {"type": "text", "text": prompt},
+                {"type": "image_url", "image_url": {"url": f"data:image/jpeg;base64,{base64_image}"}}
+            ]
+        )
+        response = llm_instance.invoke([message])
+        content = _normalize_llm_content(getattr(response, "content", "SAFE")).upper()
+        
+        if "VIOLATED" in content:
+            return False, content
+        return True, "Safe"
+    except Exception as e:
+        print(f"[SafetyCheck] Error: {e}")
+        return True, "Safe (Error Fallback)"
+from langgraph.prebuilt import create_react_agent
 
 from tools import search_internships, filter_india_jobs
 from mock_interview import mock_interview_bp
+from email_utils import send_analysis_email
 
 # ──────────────────────────────────────────────
 # Load environment variables
@@ -44,6 +99,13 @@ app = Flask(
 )
 CORS(app)
 app.config['MAX_CONTENT_LENGTH'] = 32 * 1024 * 1024  # 32 MB max upload
+
+@app.after_request
+def add_header(response):
+    """Add cache headers for static assets to improve load speed."""
+    if request.path.startswith('/images/') or request.path.endswith(('.mp4', '.jpg', '.png', '.css', '.js')):
+        response.cache_control.max_age = 604800 # 1 week
+    return response
 
 import uuid
 def _resolve_upload_folder():
@@ -83,9 +145,13 @@ def get_resume_stream_from_req(req):
     # 3. Check if the session_id from request has a file
     if session_id:
         filepath = os.path.join(UPLOAD_FOLDER, f"{session_id}.pdf")
+        print(f"[DEBUG] Checking resume for SID {session_id} at {filepath}")
         if os.path.exists(filepath):
+            print(f"[DEBUG] Found resume for SID {session_id}")
             with open(filepath, 'rb') as f:
                 return io.BytesIO(f.read())
+        else:
+            print(f"[DEBUG] No file at {filepath}")
 
     # 4. If no file yet, try identifying via Auth Token (the reliable way for logged-in users)
     auth_header = req.headers.get('Authorization', '')
@@ -96,9 +162,13 @@ def get_resume_stream_from_req(req):
             if user and user.get('session_id'):
                 sid = user.get('session_id')
                 filepath = os.path.join(UPLOAD_FOLDER, f"{sid}.pdf")
+                print(f"[DEBUG] Checking resume via Token for SID {sid} at {filepath}")
                 if os.path.exists(filepath):
+                    print(f"[DEBUG] Found resume via Token for SID {sid}")
                     with open(filepath, 'rb') as f:
                         return io.BytesIO(f.read())
+                else:
+                    print(f"[DEBUG] No file at {filepath} (via token)")
 
     return None
 
@@ -229,9 +299,15 @@ def auth_register():
         if not email or not password:
             return jsonify({'status': 'error', 'error': 'Email and password are required'}), 400
 
+        # Deep validation: Check if email domain exists
+        is_valid, validation_msg = _validate_email_deep(email)
+        if not is_valid:
+            return jsonify({'status': 'error', 'error': f"Invalid email: Please provide an existing email address. ({validation_msg})"}), 400
+
         # Check if user already exists
-        if db.get_user_by_email(email):
-            return jsonify({'status': 'error', 'error': 'User with this email already exists'}), 409
+        existing_user = db.get_user_by_email(email)
+        if existing_user:
+            return jsonify({'status': 'error', 'error': 'ALready exists this email login through the sign in page'}), 409
 
         # Handle optional resume upload
         skills = []
@@ -239,6 +315,14 @@ def auth_register():
         session_id = None
         if 'resume' in request.files:
             resume_file = request.files['resume']
+            resume_bytes = resume_file.read()
+            resume_file.seek(0)
+
+            # --- SAFETY CHECK ---
+            is_safe, safety_reason = _safety_check_resume(resume_bytes)
+            if not is_safe:
+                return jsonify({'status': 'error', 'error': f"SECURITY ALERT: Your resume contains inappropriate visual content ({safety_reason}). Registration blocked."}), 403
+
             session_id  = str(uuid.uuid4())
             filepath    = os.path.join(UPLOAD_FOLDER, f"{session_id}.pdf")
             resume_file.save(filepath)
@@ -247,28 +331,26 @@ def auth_register():
                 with open(filepath, 'rb') as f:
                     text = extract_text_from_pdf(f)
                 skills = extract_skills(text)
-                if skills:
-                    role = infer_role(skills)
-            except Exception as ex:
-                print(f"[Register] Resume parse error: {ex}")
+                if skills: role = infer_role(skills)
+            except: pass
 
-        user = db.create_user(
+        user_data = db.create_user(
             email=email,
             password_hash=_hash_password(password),
             full_name=full_name,
             target_role=role,
             session_id=session_id or '',
             extracted_skills=skills,
-            extracted_role=role
+            extracted_role=role,
+            is_verified=1
         )
-        if not user:
-            return jsonify({'status': 'error', 'error': 'User with this email already exists'}), 409
 
-        token = user.get('token', '')
+        # Auto-login after registration
+        token = db.refresh_user_token(user_data['_id'])
         return jsonify({
-            'status': 'success',
-            'token': token,
-            'session_id': session_id,
+            'token': token, 
+            'session_id': user_data.get('session_id', ''),
+            'user': db.user_to_safe_dict(user_data),
             'skills': skills,
             'role': role
         }), 201
@@ -294,8 +376,10 @@ def auth_signup():
         if not email or not password:
             return jsonify({"error": "Email and password are required"}), 400
 
-        if db.get_user_by_email(email):
-            return jsonify({"error": "User with this email already exists"}), 409
+        # Check if user already exists
+        existing_user = db.get_user_by_email(email)
+        if existing_user:
+            return jsonify({"error": "ALready exists this email login through the sign in page"}), 409
 
         # Handle optional resume upload
         skills = []
@@ -303,6 +387,14 @@ def auth_signup():
         session_id = None
         if 'resume' in request.files:
             resume_file = request.files['resume']
+            resume_bytes = resume_file.read()
+            resume_file.seek(0)
+
+            # --- SAFETY CHECK ---
+            is_safe, safety_reason = _safety_check_resume(resume_bytes)
+            if not is_safe:
+                return jsonify({'error': f"SECURITY ALERT: Inappropriate visual content detected ({safety_reason}). Account creation blocked."}), 403
+
             session_id = str(uuid.uuid4())
             filepath = os.path.join(UPLOAD_FOLDER, f"{session_id}.pdf")
             resume_file.save(filepath)
@@ -312,26 +404,24 @@ def auth_signup():
                     text = extract_text_from_pdf(f)
                 skills = extract_skills(text)
                 role = infer_role(skills) if skills else 'Software Engineer'
-            except Exception as e:
-                print(f"[Signup] Resume parsing error: {e}")
+            except: pass
 
-        user = db.create_user(
+        user_data = db.create_user(
             email=email,
             password_hash=_hash_password(password),
             full_name=full_name or email.split('@')[0],
             target_role=role,
             session_id=session_id or '',
             extracted_skills=skills,
-            extracted_role=role
+            extracted_role=role,
+            is_verified=1
         )
-        if not user:
-            return jsonify({"error": "User with this email already exists"}), 409
 
-        safe_user = db.user_to_safe_dict(user)
+        token = db.refresh_user_token(user_data['_id'])
         return jsonify({
-            'token': user['token'],
-            'session_id': session_id,
-            'user': safe_user,
+            'token': token,
+            'session_id': user_data.get('session_id', ''),
+            'user': db.user_to_safe_dict(user_data),
             'skills': skills,
             'role': role
         }), 201
@@ -354,26 +444,151 @@ def auth_login():
         if not email or not password:
             return jsonify({'error': 'Email and password are required'}), 400
 
+        # Deep validation: Check if email domain exists
+        is_valid, validation_msg = _validate_email_deep(email)
+        if not is_valid:
+            return jsonify({'error': f"Please provide a valid, existing email address. ({validation_msg})"}), 400
+
         user = db.get_user_by_email(email)
         if not user:
-            return jsonify({'error': 'Invalid email or password'}), 401
+            # Auto-create verified user
+            user_data = db.create_user(
+                email=email,
+                password_hash=_hash_password(password),
+                full_name=email.split('@')[0],
+                target_role='Software Engineer',
+                is_verified=1
+            )
+            token = db.refresh_user_token(user_data['_id'])
+            return jsonify({
+                'token': token,
+                'session_id': user_data.get('session_id', ''),
+                'user': db.user_to_safe_dict(user_data),
+                'skills': [],
+                'role': 'Software Engineer'
+            }), 200
+
+        # Check if banned
+        if user.get('is_banned'):
+            return jsonify({'error': 'ACCESS DENIED: Your account is permanently banned for violating our community safety standards.'}), 403
 
         # Verify password
         if user.get('password_hash') != _hash_password(password):
             return jsonify({'error': 'Invalid email or password'}), 401
+
+        # Check verification status (fallback for older accounts)
+        if not user.get('is_verified'):
+            db.mark_user_verified(email)
+            user['is_verified'] = 1
 
         # Refresh token on every login
         token = db.refresh_user_token(user['_id'])
 
         skills    = user.get('extractedSkills', [])
         role      = user.get('extractedRole', user.get('extracted_role', 'Software Engineer'))
-        full_name = user.get('fullName', user.get('full_name', '')) or email.split('@')[0]
-
+        
         safe_user = db.user_to_safe_dict(user)
-        safe_user['token'] = token  # Use the refreshed token
-        return jsonify({'token': token, 'user': safe_user, 'skills': skills, 'role': role})
+        safe_user['token'] = token
+        return jsonify({'token': token, 'session_id': user.get('session_id', ''), 'user': safe_user, 'skills': skills, 'role': role})
     except Exception as e:
         import traceback; traceback.print_exc()
+        return jsonify({'error': str(e)}), 500
+
+@app.route('/api/auth/verify-otp', methods=['POST'])
+def auth_verify_otp():
+    try:
+        data = request.get_json() or {}
+        email = data.get('email')
+        otp = data.get('otp')
+        
+        if not email or not otp:
+            return jsonify({'error': 'Email and OTP are required'}), 400
+            
+        if db.verify_otp(email, otp):
+            db.mark_user_verified(email)
+            user = db.get_user_by_email(email)
+            return jsonify({
+                'status': 'success',
+                'message': 'Email verified successfully!',
+                'token': user['token'],
+                'session_id': user.get('session_id', ''),
+                'user': db.user_to_safe_dict(user)
+            })
+        else:
+            return jsonify({'error': 'Invalid or expired OTP code'}), 400
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+
+@app.route('/api/auth/resend-otp', methods=['POST'])
+def auth_resend_otp():
+    try:
+        data = request.get_json() or {}
+        email = data.get('email')
+        if not email:
+            return jsonify({'error': 'Email is required'}), 400
+            
+        import random
+        otp = f"{random.randint(100000, 999999)}"
+        db.save_otp(email, otp)
+        from email_utils import send_otp_email
+        send_otp_email(email, otp)
+        
+        return jsonify({'status': 'success', 'message': 'New OTP sent to your inbox.'})
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+
+@app.route('/api/auth/forgot-password', methods=['POST'])
+def auth_forgot_password():
+    try:
+        data = request.get_json() or {}
+        email = data.get('email', '').strip().lower()
+        if not email:
+            return jsonify({'error': 'Email is required'}), 400
+            
+        user = db.get_user_by_email(email)
+        if not user:
+            # We return success even if user doesn't exist for security (avoid enumeration)
+            # but in a friendly app we can just say "If account exists, email sent"
+            return jsonify({'status': 'success', 'message': 'If an account exists with this email, a reset code has been sent.'})
+
+        import random
+        otp = f"{random.randint(100000, 999999)}"
+        db.save_reset_otp(email, otp)
+        from email_utils import send_reset_email
+        send_reset_email(email, otp)
+        
+        return jsonify({'status': 'success', 'message': 'Reset code sent to your inbox.'})
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+
+@app.route('/api/auth/reset-password', methods=['POST'])
+def auth_reset_password():
+    try:
+        data = request.get_json() or {}
+        email = data.get('email', '').strip().lower()
+        otp = data.get('otp', '').strip()
+        new_password = data.get('password', '')
+
+        if not email or not otp or not new_password:
+            return jsonify({'error': 'Email, OTP, and new password are required'}), 400
+            
+        if db.verify_reset_otp(email, otp):
+            db.update_user_password(email, _hash_password(new_password))
+            user = db.get_user_by_email(email)
+            token = db.refresh_user_token(user['_id'])
+            return jsonify({
+                'status': 'success', 
+                'message': 'Password reset successful!',
+                'token': token,
+                'session_id': user.get('session_id', ''),
+                'user': db.user_to_safe_dict(user)
+            })
+        else:
+            return jsonify({'error': 'Invalid or expired reset code'}), 400
+    except Exception as e:
         return jsonify({'error': str(e)}), 500
 
 
@@ -391,26 +606,47 @@ def auth_upload_resume():
             return jsonify({'error': 'No resume file provided'}), 400
 
         resume_file = request.files['resume']
+        resume_bytes = resume_file.read()
+        resume_file.seek(0)
+
+        # --- SAFETY CHECK ---
+        is_safe, safety_reason = _safety_check_resume(resume_bytes)
+        if not is_safe:
+            # BAN THE USER IMMEDIATELY
+            db.update_user(user['_id'], is_banned=1)
+            return jsonify({'error': f"SECURITY ALERT: Inappropriate content detected ({safety_reason}). Your account has been permanently BANNED."}), 403
+
         session_id = str(uuid.uuid4())
         filepath = os.path.join(UPLOAD_FOLDER, f"{session_id}.pdf")
         resume_file.save(filepath)
 
         skills = []
         role = 'Software Engineer'
+        full_name = None
         try:
-            from mock_interview import extract_text_from_pdf, extract_skills, infer_role
+            from mock_interview import extract_text_from_pdf, extract_skills, infer_role, extract_resume_profile
             with open(filepath, 'rb') as f:
                 text = extract_text_from_pdf(f)
             skills = extract_skills(text)
             role = infer_role(skills) if skills else 'Software Engineer'
+            
+            # Extract profile info like name
+            profile_data = extract_resume_profile(text)
+            if profile_data and profile_data.get('fullName') and profile_data.get('fullName') != "[Candidate Full Name]":
+                full_name = profile_data.get('fullName')
         except Exception as e:
             print(f"[UploadResume] Error: {e}")
 
-        db.update_user(user['_id'],
-            extracted_skills=skills,
-            extracted_role=role,
-            session_id=session_id
-        )
+        # Update user record
+        update_args = {
+            'extracted_skills': skills,
+            'extracted_role': role,
+            'session_id': session_id
+        }
+        if full_name:
+            update_args['full_name'] = full_name
+            
+        db.update_user(user['_id'], **update_args)
 
         # Re-fetch updated user
         user = db.get_user_by_id(user['_id'])
@@ -421,75 +657,13 @@ def auth_upload_resume():
         return jsonify({'error': str(e)}), 500
 
 
-# ── In-memory reset token store: {email: {code, expires_at}} ──
-import time as _time
-_reset_tokens = {}
+# ──────────────────────────────────────────────
+# Forgot Password Pages
+# ──────────────────────────────────────────────
 
 @app.route('/forgot-password')
 def forgot_password_page():
     return render_template('forgot-password.html')
-
-@app.route('/api/auth/forgot-password', methods=['POST'])
-def auth_forgot_password():
-    try:
-        email = request.form.get('email', '').strip().lower()
-        if not email:
-            return jsonify({'error': 'Email is required'}), 400
-
-        user = db.get_user_by_email(email)
-        if not user:
-            return jsonify({'error': 'No account found with that email address.'}), 404
-
-        # Generate a 6-digit OTP
-        import random as _random
-        code = str(_random.randint(100000, 999999))
-        _reset_tokens[email] = {
-            'code': code,
-            'expires_at': _time.time() + 600  # 10 minutes
-        }
-        print(f"[Password Reset] Code for {email}: {code}")
-
-        # Return the code directly (local/demo mode — no email server)
-        return jsonify({'status': 'ok', 'code': code,
-                        'message': 'Reset code generated. Copy it from the box above.'})
-    except Exception as e:
-        import traceback; traceback.print_exc()
-        return jsonify({'error': str(e)}), 500
-
-
-@app.route('/api/auth/reset-password', methods=['POST'])
-def auth_reset_password():
-    try:
-        email    = request.form.get('email', '').strip().lower()
-        code     = request.form.get('code', '').strip()
-        new_pw   = request.form.get('new_password', '')
-
-        if not email or not code or not new_pw:
-            return jsonify({'error': 'Email, code and new password are required.'}), 400
-        if len(new_pw) < 6:
-            return jsonify({'error': 'Password must be at least 6 characters.'}), 400
-
-        token_data = _reset_tokens.get(email)
-        if not token_data:
-            return jsonify({'error': 'No reset code found. Please request a new one.'}), 400
-        if _time.time() > token_data['expires_at']:
-            _reset_tokens.pop(email, None)
-            return jsonify({'error': 'Reset code has expired. Please request a new one.'}), 400
-        if token_data['code'] != code:
-            return jsonify({'error': 'Invalid reset code. Check and try again.'}), 400
-
-        # All good — update the password
-        user = db.get_user_by_email(email)
-        if not user:
-            return jsonify({'error': 'Account not found.'}), 404
-
-        db.update_user_password(email, _hash_password(new_pw))
-        _reset_tokens.pop(email, None)       # invalidate used token
-
-        return jsonify({'status': 'success', 'message': 'Password reset successfully.'})
-    except Exception as e:
-        import traceback; traceback.print_exc()
-        return jsonify({'error': str(e)}), 500
 
 
 # ──────────────────────────────────────────────
@@ -587,16 +761,20 @@ def api_save_interview_history():
 # LangChain Agent Setup
 # ──────────────────────────────────────────────
 
-# ── LLM Setup: Google Gemini 2.5 Flash (free tier) primary, Ollama fallback ──
-llm = None
-llm_resume = None
+# ── LLM Setup: Google Gemini 2.5 Flash (free tier) primary, graceful fallback ──
+GOOGLE_API_KEY = os.getenv("GOOGLE_API_KEY", "")
+_llm_instance = None
+_llm_resume_instance = None
 
-def setup_llm():
-    global llm, llm_resume
-    GOOGLE_API_KEY = os.getenv("GOOGLE_API_KEY", "")
-    if GOOGLE_API_KEY:
+def get_llm():
+    global _llm_instance
+    if _llm_instance is not None:
+        return _llm_instance
+    if not GOOGLE_API_KEY:
+        return None
+    try:
         from langchain_google_genai import ChatGoogleGenerativeAI
-        llm = ChatGoogleGenerativeAI(
+        _llm_instance = ChatGoogleGenerativeAI(
             model="gemini-2.5-flash",
             google_api_key=GOOGLE_API_KEY,
             temperature=0.4,
@@ -604,7 +782,21 @@ def setup_llm():
             top_p=0.95,
             top_k=40
         )
-        llm_resume = ChatGoogleGenerativeAI(
+        print("[OK] LLM: Google Gemini 2.5 Flash")
+        return _llm_instance
+    except Exception as _llm_err:
+        print(f"[WARN] Failed to initialise Gemini LLM: {_llm_err}")
+        return None
+
+def get_llm_resume():
+    global _llm_resume_instance
+    if _llm_resume_instance is not None:
+        return _llm_resume_instance
+    if not GOOGLE_API_KEY:
+        return None
+    try:
+        from langchain_google_genai import ChatGoogleGenerativeAI
+        _llm_resume_instance = ChatGoogleGenerativeAI(
             model="gemini-2.5-flash",
             google_api_key=GOOGLE_API_KEY,
             temperature=0.8,
@@ -612,13 +804,14 @@ def setup_llm():
             top_p=0.98,
             top_k=50
         )
-        print("[OK] LLM: Google Gemini 2.5 Flash")
-    else:
-        from langchain_ollama import ChatOllama
-        llm = ChatOllama(model="llama3.2:1b", temperature=0.1)
-        llm_resume = llm
-        print("[WARN] GOOGLE_API_KEY not set - falling back to local Ollama llama3.2:1b")
-# Tools available to the agent
+        return _llm_resume_instance
+    except Exception as _llm_err:
+        print(f"[WARN] Failed to initialise Gemini Resume LLM: {_llm_err}")
+        return None
+if not GOOGLE_API_KEY:
+    print("[WARN] GOOGLE_API_KEY not set - AI chat features will be unavailable.")
+    print("       Set GOOGLE_API_KEY in your Modal secret or .env file.")
+    print("       Get a free Gemini key at: https://aistudio.google.com/")
 tools = [search_internships]
 
 # System prompt for the AI agent (Optimized for speed & anti-hallucination)
@@ -630,14 +823,6 @@ RULES:
 3. DO NOT change the JSON. DO NOT change the apply_links. DO NOT invent URLs. DO NOT hallucinate.
 4. Keep all conversational text extremely concise. Answer in 1 short sentence.
 """
-
-# Create the agent using LangGraph's create_react_agent
-agent = None
-def setup_agent():
-    global agent
-    if llm:
-        from langgraph.prebuilt import create_react_agent
-        agent = create_react_agent(llm, tools)
 
 # ──────────────────────────────────────────────
 # In-memory chat history (per session — resets on server restart)
@@ -651,7 +836,6 @@ def get_chat_history(session_id: str) -> list:
     with CHAT_HISTORY_LOCK:
         history = chat_histories.get(sid)
         if history is None:
-            from langchain_core.messages import SystemMessage
             history = [SystemMessage(content=SYSTEM_PROMPT)]
             chat_histories[sid] = history
         else:
@@ -693,8 +877,9 @@ def about_us():
     """Serve the about us page."""
     return render_template("about-us.html")
 
+@app.route("/privacy")
 @app.route("/privacy-policy")
-def privacy_policy():
+def privacy():
     """Serve the privacy policy page."""
     return render_template("privacy-policy.html")
 
@@ -703,9 +888,10 @@ def terms_and_conditions():
     """Serve the terms and conditions page."""
     return render_template("terms-and-conditions.html")
 
+@app.route("/contact")
 @app.route("/contact-us")
-def contact_us():
-    """Serve the contact us page."""
+def contact():
+    """Serve the contact page."""
     return render_template("contact-us.html")
 
 @app.route("/profile")
@@ -725,11 +911,18 @@ def user_dashboard():
     """Serve the post-auth user dashboard."""
     return render_template("user-dashboard.html")
 
-
 @app.route("/dashboard")
 def dashboard():
-    """Serve the new professional dashboard."""
     return render_template("user-dashboard.html")
+
+@app.route("/mock-interview/", defaults={"path": ""})
+@app.route("/mock-interview/<path:path>")
+def serve_mock_interview(path):
+    return render_template("mock-interview.html")
+
+@app.route("/documentation")
+def documentation():
+    return render_template("documentation.html")
 
 @app.route("/bot")
 def bot():
@@ -743,6 +936,10 @@ def login():
 @app.route('/register')
 def register():
     return render_template('register.html')
+
+@app.route('/verify')
+def verify():
+    return render_template('verify.html')
 
 # ── Auth routes are now proxied to Node.js backend via /api/auth/<path:subpath> ──
 
@@ -988,7 +1185,7 @@ Output ONLY bullets on separate lines starting with "- ", NO PREAMBLE."""
             
             try:
                 print(f"[DEBUG] Calling LLM for {context} enhancement...")
-                res = llm_resume.invoke([HumanMessage(content=prompt)])
+                res = get_llm_resume().invoke([HumanMessage(content=prompt)])
                 result = res.content.strip()
                 
                 # Clean up formatting
@@ -1120,7 +1317,7 @@ OUTPUT ONLY THE SUMMARY - NO PREAMBLE."""
             
             try:
                 print(f"[DEBUG] Generating professional summary ({variation['angle']})...")
-                res = llm_resume.invoke([HumanMessage(content=prompt)])
+                res = get_llm_resume().invoke([HumanMessage(content=prompt)])
                 result = res.content.strip().replace('```', '').replace('**', '')
                 
                 if result and len(result.strip()) > 30:
@@ -1192,7 +1389,7 @@ OUTPUT - 4 varied bullets starting with dash, NO PREAMBLE."""
             
             try:
                 print(f"[DEBUG] Generating job description ({focus_angle})...")
-                res = llm_resume.invoke([HumanMessage(content=prompt)])
+                res = get_llm_resume().invoke([HumanMessage(content=prompt)])
                 result = res.content.strip()
                 
                 # Ensure we have bullet format
@@ -1297,11 +1494,65 @@ OUTPUT - 4 varied bullets starting with dash, NO PREAMBLE."""
         from mock_interview import extract_skills
         combined_text = f"{data.get('profession', '')} {data.get('summary', '')} {data.get('jobDesc', '')} {data.get('degree', '')} {data.get('skills', '')}"
         extracted = extract_skills(combined_text)
+
+        # ──────────────────────────────────────────────
+        # ATS Score & LaTeX Generation
+        # ──────────────────────────────────────────────
+        def calc_ats_score():
+            s = 20 # Base
+            if len(summary_text or "") > 150: s += 15
+            if len(job_desc_text or "") > 250: s += 20
+            if len(extracted) > 8: s += 20
+            if data.get('degree'): s += 10
+            if data.get('email') and data.get('phone'): s += 15
+            return min(98, s)
+
+        def get_latex():
+            return f"""\\documentclass[11pt,a4paper,sans]{{moderncv}}
+\\moderncvstyle{{classic}}
+\\moderncvcolor{{blue}}
+\\usepackage[utf8]{{inputenc}}
+\\usepackage[scale=0.75]{{geometry}}
+
+\\name{{{data.get('firstName', '')}}}{{{data.get('lastName', '')}}}
+\\title{{{data.get('profession', 'Software Engineer')}}}
+\\address{{{data.get('location', 'Global')}}}
+\\phone[mobile]{{{data.get('phone', '')}}}
+\\email{{{data.get('email', '')}}}
+
+\\begin{{document}}
+\\makecvtitle
+
+\\section{{Summary}}
+{summary_text.replace('&', '\\&').replace('%', '\\%') if summary_text else ""}
+
+\\section{{Experience}}
+\\cventry{{{data.get('jobStart', '')}--{data.get('jobEnd', 'Present')}}}{{{data.get('jobTitle', 'Role')}}}{{{data.get('employer', 'Company')}}}{{}}{{{}}}{{{job_desc_text.replace('&', '\\&').replace('%', '\\%') if job_desc_text else ""}}}
+
+\\section{{Education}}
+\\cventry{{{data.get('gradYear', '')}}}{{{data.get('degree', '')}}}{{{data.get('school', '')}}}{{{data.get('schoolLoc', '')}}}{{}}{{}}
+
+\\section{{Skills}}
+\\cvitem{{Technical}}{{{data.get('skills', '').replace('&', '\\&').replace('%', '\\%')}}}
+
+\\end{{document}}"""
+
+        ats_score = calc_ats_score()
+        latex_code = get_latex()
+
+        # Update user session with the new resume and score
+        db.update_user(user['_id'], 
+                       session_id=session_id, 
+                       extracted_skills=extracted,
+                       resume_text=f"{summary_text} {job_desc_text} {data.get('skills','')}")
         
-        # Update user session
-        db.update_user(user['_id'], session_id=session_id, extracted_skills=extracted)
-        
-        return jsonify({'status': 'success', 'session_id': session_id, 'skills': extracted})
+        return jsonify({
+            'status': 'success', 
+            'session_id': session_id, 
+            'skills': extracted, 
+            'ats_score': ats_score,
+            'latex': latex_code
+        })
     except Exception as e:
         import traceback; traceback.print_exc()
         return jsonify({'error': str(e)}), 500
@@ -1335,7 +1586,9 @@ def analyze_resume_for_dashboard():
       4. Score each listing against user's skill profile
       5. Return stats + top matched internships
     """
-    from mock_interview import extract_text_from_pdf, extract_skills, infer_role, extract_resume_profile
+    user_email = None
+    user_name = None
+    from mock_interview import extract_text_from_pdf, extract_skills, infer_role, extract_resume_profile, get_skill_gap_recommendations
     import requests
     from bs4 import BeautifulSoup
 
@@ -1374,83 +1627,119 @@ def analyze_resume_for_dashboard():
         # ── Step 2: Extract skills, role, and profile details ────────
         profile = extract_resume_profile(text)
         skills = profile.get("skills", [])
+        inferred_role = profile.get("role") or "Software Engineer"
+
+        # DEEP INFERENCE: If skills are not directly mentioned, use AI to infer from experience/projects
+        if len(skills) < 5:
+            print("[Analysis] Basic extraction weak. Running Deep AI Inference...")
+            llm = get_llm()
+            if llm:
+                try:
+                    from langchain_core.messages import HumanMessage
+                    inference_prompt = f"""
+                    Analyze this resume text and identify the core technical skills and professional role.
+                    Even if there isn't a 'Skills' section, infer them from the Projects, Experience, and Education descriptions.
+                    
+                    RESUME TEXT:
+                    {text[:3000]}
+                    
+                    Return ONLY a JSON object:
+                    {{
+                        "inferred_skills": ["skill1", "skill2", ...],
+                        "suggested_role": "Professional Role Title"
+                    }}
+                    """
+                    resp = llm.invoke([HumanMessage(content=inference_prompt)])
+                    raw_resp = resp.content.strip()
+                    if "```json" in raw_resp: raw_resp = raw_resp.split("```json")[1].split("```")[0].strip()
+                    elif "```" in raw_resp: raw_resp = raw_resp.split("```")[1].split("```")[0].strip()
+                    
+                    deep_data = json.loads(raw_resp)
+                    ai_skills = deep_data.get("inferred_skills", [])
+                    if ai_skills:
+                        skills = list(set(skills + ai_skills))
+                    if deep_data.get("suggested_role"):
+                        inferred_role = deep_data["suggested_role"]
+                    print(f"[Analysis] Deep Inference found: {skills}")
+                except Exception as e:
+                    print(f"[Analysis] Deep Inference failed: {e}")
+
         if not skills:
             skills = ['Python', 'Communication', 'Problem Solving']
 
-        inferred_role = profile.get("role") or infer_role(skills)
-
         # Update user profile and save file if provided
+        user = None
         auth_header = request.headers.get('Authorization', '')
         if auth_header.startswith('Bearer '):
             token = auth_header.replace('Bearer ', '').strip()
             user = db.get_user_by_token(token)
-            if user:
-                update_data = {
-                    'extracted_skills': skills,
-                    'extracted_role': inferred_role
-                }
-                
-                # If a new resume was uploaded, save it and update session_id
-                if 'resume' in request.files and request.files['resume'].filename != '':
-                    import uuid
-                    new_session_id = str(uuid.uuid4())
-                    filepath = os.path.join(UPLOAD_FOLDER, f"{new_session_id}.pdf")
-                    # Seek to beginning to ensure we save the whole file (in case extraction already read it)
-                    request.files['resume'].seek(0)
-                    request.files['resume'].save(filepath)
-                    update_data['session_id'] = new_session_id
-                
-                db.update_user(user['_id'], **update_data)
+        
+        if not user:
+            # Fallback to session_id lookup if no Bearer token
+            sid = request.form.get('session_id') or (request.get_json(silent=True) or {}).get('session_id')
+            if sid:
+                user = db.get_user_by_session_id(sid)
+
+        if user:
+            update_data = {
+                'extracted_skills': skills,
+                'extracted_role': inferred_role
+            }
+            
+            # If a new resume was uploaded, save it and update session_id
+            if 'resume' in request.files and request.files['resume'].filename != '':
+                import uuid
+                new_session_id = str(uuid.uuid4())
+                filepath = os.path.join(UPLOAD_FOLDER, f"{new_session_id}.pdf")
+                # Seek to beginning to ensure we save the whole file (in case extraction already read it)
+                request.files['resume'].seek(0)
+                request.files['resume'].save(filepath)
+                update_data['session_id'] = new_session_id
+            
+            db.update_user(user['_id'], **update_data)
+            
+            # Capture for email
+            user_name = user.get('full_name') or user.get('fullName') or "User"
+
+        # ── Step 2.5: Skill Gap Analysis ─────────────────────────────
+        skill_gap_data = get_skill_gap_recommendations(skills, inferred_role)
 
         # ── Step 3: Scrape real internships ──────────────────────────
-        def scrape_internships(skill_query, role_query, max_results=15):
-            """Scrape real internship listings using DuckDuckGo HTML search."""
-            jobs = []
-            headers = {'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0 Safari/537.36'}
-
-            # Force inclusion of role and intern/internship keywords
-            search_terms = [
-                f'"{role_query}" intern internship india 2025 2026',
-                f'{skill_query} "{role_query}" internship India',
-                f'site:linkedin.com "{role_query}" internship India'
-            ]
-
-            for query in search_terms:
-                try:
-                    search_url = f"https://html.duckduckgo.com/html/?q={requests.utils.quote(query)}"
-                    resp = requests.get(search_url, headers=headers, timeout=10)
-                    soup = BeautifulSoup(resp.text, 'html.parser')
-
-                    for result in soup.select('.result')[:max_results]:
-                        title_el = result.select_one('.result__title')
-                        snippet_el = result.select_one('.result__snippet')
-                        url_el = result.select_one('.result__url')
-
-                        if title_el and snippet_el:
-                            title = title_el.get_text(strip=True)
-                            snippet = snippet_el.get_text(strip=True)
-                            url = url_el.get_text(strip=True) if url_el else ''
-
-                            # Strict validation: Must be an internship and related to the role or tech
-                            combined = (title + ' ' + snippet).lower()
-                            is_intern = any(w in combined for w in ['intern', 'internship', 'entry level', 'fresher', 'graduate'])
-                            
-                            # Filter out non-tech/irrelevant roles like "driver", "security", etc.
-                            # We check if at least one word from the role query or common tech keywords exists in title
-                            role_words = role_query.lower().split()
-                            tech_keywords = ['software', 'developer', 'engineer', 'backend', 'frontend', 'data', 'ai', 'cloud', 'tech', 'coding', 'programming']
-                            is_relevant = any(w in title.lower() for w in role_words) or any(w in title.lower() for w in tech_keywords)
-                            india_markers = ['india', 'bangalore', 'bengaluru', 'hyderabad', 'pune', 'mumbai', 'delhi', 'noida', 'gurgaon', 'gurugram', '.in']
-                            is_india = any(m in combined for m in india_markers) or any(m in (url or '').lower() for m in india_markers)
-
-                            if is_intern and is_relevant and is_india:
-                                jobs.append({'title': title, 'snippet': snippet, 'url': url})
-
-                    if len(jobs) >= 5: break
-                except Exception as e:
-                    print(f"[Scraper] Error: {e}")
-
-            return jobs
+        def scrape_internships(skill_query, role_query, fast_mode=False):
+            """Scrape real internship listings. fast_mode uses only 1 source."""
+            from tools import search_internships
+            import json
+            
+            query = f"{role_query} internship in India knowing {skill_query}"
+            
+            # If in fast_mode (for bot/quick views), we limit sources to just LinkedIn
+            # or a very fast search to keep latency low.
+            if fast_mode:
+                query += " site:linkedin.com"
+            
+            print(f"[Dashboard Scraper] {'FAST ' if fast_mode else ''}Search for: {query}")
+            
+            try:
+                # Use the tool with restricted sources for fast_mode
+                tool_output = search_internships.invoke({"query": query})
+                
+                # Extract JSON from markdown response
+                json_str = tool_output.replace("```internship_cards\n", "").replace("\n```", "").strip()
+                cards = json.loads(json_str)
+                
+                formatted = []
+                for card in cards:
+                    formatted.append({
+                        'title': card.get('title', 'Internship Role'),
+                        'company': card.get('company', 'Tech Company'),
+                        'location': card.get('location', 'India'),
+                        'snippet': card.get('description', ''),
+                        'url': card.get('apply_link', '#')
+                    })
+                return formatted
+            except Exception as e:
+                print(f"[Dashboard Scraper] Tool error: {e}")
+                return []
 
         # ── Step 4: Score each scraped job against skills ─────────────
         def compute_match_score(job_text, user_skills_lower):
@@ -1462,68 +1751,57 @@ def analyze_resume_for_dashboard():
             return base_score
 
         # Prepare queries
+        is_fast = request.args.get('fast') == 'true' or request.form.get('fast') == 'true'
         skills_subset = skills[:3]
-        skill_query = " ".join(skills_subset)
-        raw_jobs = scrape_internships(skill_query, inferred_role, max_results=15)
+        skill_query = ", ".join(skills_subset)
+        raw_jobs = scrape_internships(skill_query, inferred_role, fast_mode=is_fast)
 
         user_skills_lower = [s.lower() for s in skills]
-
-        # Score and sort
         scored_jobs = []
-        seen_titles = set()
+        seen_urls = set()
+        
         for job in raw_jobs:
+            if job['url'] in seen_urls: continue
+            seen_urls.add(job['url'])
+            
             combined_text = job['title'] + ' ' + job['snippet']
             score = compute_match_score(combined_text, user_skills_lower)
 
-            # Give bonus points for matching role keywords in title
+            # Bonus for role match
             if inferred_role.lower().split()[0] in job['title'].lower():
-                score = min(100, score + 8)
+                score = min(99, score + 5)
 
-            clean_title = job['title'][:60]
-            if clean_title not in seen_titles:
-                seen_titles.add(clean_title)
-                scored_jobs.append({
-                    'title': clean_title,
-                    'snippet': job['snippet'][:120],
-                    'url': 'https://' + job['url'] if job['url'] and not job['url'].startswith('http') else job['url'],
-                    'matchScore': score,
-                    'company': _extract_company(job['url'], job['snippet']),
-                    'mode': _guess_mode(job['snippet']),
-                })
+            scored_jobs.append({
+                'title': job['title'][:70],
+                'snippet': job['snippet'][:150],
+                'url': job['url'],
+                'matchScore': score,
+                'company': job['company'],
+                'mode': 'Remote' if 'Remote' in job.get('location', '') else 'On-site',
+                'location': job.get('location', 'India')
+            })
 
         scored_jobs.sort(key=lambda j: j['matchScore'], reverse=True)
         top_jobs = scored_jobs[:10]
+
+        # Fix missing all_job_lower for market trend analysis
+        all_job_lower = " ".join([j['title'] + ' ' + j['snippet'] for j in scored_jobs]).lower()
 
         # Step 5: Compute dashboard stats
         matched_count = len(scored_jobs)
         avg_score = round(sum(j['matchScore'] for j in top_jobs) / max(len(top_jobs), 1)) if top_jobs else 75
         interviews_completed = max(1, min(20, len(skills) // 3))
 
-        # Step 6: Skill Gap Analysis
-        DEMAND_SKILLS_DB = [
-            'Python','JavaScript','TypeScript','React','Node.js','Java','C++','C#','Go','Rust',
-            'SQL','PostgreSQL','MongoDB','Redis','MySQL','Docker','Kubernetes','AWS','GCP','Azure',
-            'Terraform','CI/CD','Linux','Git','REST API','GraphQL','Microservices','FastAPI',
-            'Django','Flask','Spring Boot','Machine Learning','Deep Learning','TensorFlow','PyTorch',
-            'NLP','Computer Vision','Pandas','NumPy','Scikit-learn','Data Science','Tableau',
-            'Power BI','React Native','Flutter','Kotlin','Swift','Android','iOS','Figma','UI/UX',
-            'Agile','Scrum','Jira','DevOps','MLOps','LangChain','OpenAI','Blockchain',
-            'Cybersecurity','Spark','Hadoop','Vue.js','Angular','Next.js','Excel',
-        ]
-        all_job_text = ' '.join((j['title'] + ' ' + j['snippet']) for j in raw_jobs)
-        all_job_lower = all_job_text.lower()
-        skill_freq = {}
-        for sk in DEMAND_SKILLS_DB:
-            cnt = all_job_lower.count(sk.lower())
-            if cnt > 0:
-                skill_freq[sk] = cnt
+        # Step 6: Skill Gap Analysis with Resources
+        gap_results = get_skill_gap_recommendations(skills, inferred_role)
         gap_skills = []
-        for sk, cnt in sorted(skill_freq.items(), key=lambda x: x[1], reverse=True):
-            if sk.lower() not in user_skills_lower:
-                priority = 'high' if cnt >= 3 else 'medium' if cnt >= 2 else 'low'
-                gap_skills.append({'skill': sk, 'demand': cnt, 'priority': priority})
-            if len(gap_skills) >= 10:
-                break
+        for rec in gap_results["recommendations"]:
+            gap_skills.append({
+                'skill': rec['skill'],
+                'priority': 'high',
+                'youtube': rec['youtube'],
+                'books': rec['books']
+            })
 
         # Step 7: Live Market Trends
         ROLE_MAP = {
@@ -1574,28 +1852,6 @@ def analyze_resume_for_dashboard():
                 {'role': 'Mobile Dev',        'count': 10, 'percent': 8},
                 {'role': 'DevOps / Cloud',    'count': 9,  'percent': 7},
             ]
-
-        # --- Fallback: role-based gap skills when scraping returns nothing ---
-        if not gap_skills:
-            ROLE_GAP_MAP = {
-                'Software Engineer':   ['Docker','Kubernetes','AWS','System Design','GraphQL','CI/CD'],
-                'Frontend Developer':  ['TypeScript','Next.js','GraphQL','Jest','Docker','AWS'],
-                'Data Scientist':      ['PyTorch','TensorFlow','Spark','Airflow','MLOps','Docker'],
-                'Machine Learning':    ['PyTorch','MLOps','Docker','Kubernetes','Spark','GCP'],
-                'Full Stack Developer':['Docker','AWS','GraphQL','Redis','Kubernetes','CI/CD'],
-                'Mobile Developer':    ['Kotlin','Swift','React Native','Firebase','CI/CD','AWS'],
-                'DevOps Engineer':     ['Terraform','Ansible','GCP','Azure','Prometheus','Grafana'],
-            }
-            fallback_role = inferred_role if inferred_role in ROLE_GAP_MAP else 'Software Engineer'
-            for sk in ROLE_GAP_MAP.get(fallback_role, []):
-                if sk.lower() not in user_skills_lower:
-                    gap_skills.append({'skill': sk, 'demand': 3, 'priority': 'high'})
-            generic = ['Docker','AWS','Git','Agile','REST API','PostgreSQL','Redis','CI/CD']
-            for sk in generic:
-                if sk.lower() not in user_skills_lower and not any(g['skill']==sk for g in gap_skills):
-                    gap_skills.append({'skill': sk, 'demand': 2, 'priority': 'medium'})
-                if len(gap_skills) >= 10:
-                    break
         # --- Fallback: static matches when scraping returns nothing ---
         if not top_jobs:
             top_jobs = [
@@ -1643,6 +1899,11 @@ def analyze_resume_for_dashboard():
             for job in top_jobs:
                 if 'insight' not in job:
                     job['insight'] = _company_insight(job.get('snippet', ''), job.get('company', ''))
+
+        # Send email notification in background
+        if user_email:
+            import threading
+            threading.Thread(target=send_analysis_email, args=(user_email, user_name, skills, inferred_role)).start()
 
         return jsonify({
             "name": profile.get("fullName", ""),
@@ -1759,13 +2020,15 @@ def generate_cover_letter():
         if len(resume_text.strip()) < 30:
             return jsonify({"error": "Could not extract readable text from this file."}), 400
 
-        # Build strict official-format prompt
-        prompt_text = f"""You are a professional cover letter writer. Generate a complete, formal business cover letter.
+        # Build strict official-format prompt with focus on uniqueness and professionalism
+        prompt_text = f"""You are an elite executive career coach and professional cover letter writer. Generate a highly realistic, unique, and professional business cover letter.
 
 Requirements:
 - Use the exact date: {today}
 - Target position: {job_title}
 - Target company: {company}
+- Tone: Confident, modern, engaging, and highly professional. Avoid generic clichés, overly formal archaic language, or robotic phrasing.
+- Strategy: Do NOT just summarize the resume. Instead, tell a compelling brief story about the candidate's unique value proposition. Focus on impact, problem-solving, and how their specific background perfectly aligns with the needs of {company}.
 - Use the candidate's details extracted from the resume below.
 
 Resume Content:
@@ -1778,12 +2041,12 @@ Job Description (if provided):
 {job_description[:1500] or "Not provided"}
 ---
 
-The cover letter MUST follow this EXACT official format:
+The cover letter MUST follow this EXACT official format. YOU MUST REPLACE the bracketed placeholders below with the actual information extracted from the candidate's resume:
 
-[Candidate Full Name]
-[Candidate Email]
-[Candidate Phone, if found in resume]
-[City, if found in resume]
+[Extract Candidate Full Name]
+[Extract Candidate Email]
+[Extract Candidate Phone, or omit line if not found]
+[Extract City, or omit line if not found]
 {today}
 
 Hiring Manager
@@ -1792,20 +2055,20 @@ Subject: Application for the Position of {job_title}
 
 Dear Hiring Manager,
 
-[Opening paragraph: Express strong enthusiasm for the role and company. Mention where you learned about the position.]
+[Opening paragraph: A strong, unique hook that expresses genuine enthusiasm for {company} and the {job_title} role. Avoid generic openings like "I am writing to apply for..."]
 
-[Body paragraph: Highlight 2-3 specific skills, experiences, or projects from the resume most relevant to {job_title}. Use concrete details.]
+[Body paragraph(s): Highlight 2-3 specific, high-impact achievements from the resume that demonstrate immediate value to {company}. Connect the dots between past success and future potential. Use concrete metrics or outcomes where available.]
 
-[Closing paragraph: Reiterate interest, mention availability for an interview, and thank them for their consideration.]
+[Closing paragraph: A confident, forward-looking close. Reiterate interest, express eagerness to discuss how their skills align with {company}'s goals, and thank the reader.]
 
 Sincerely,
 [Candidate Full Name]
 
-Return ONLY the formatted cover letter text, no extra explanations."""
+Return ONLY the formatted cover letter text, no extra explanations or markdown blocks around the text."""
 
         try:
             # Call configured LLM
-            response = llm.invoke([HumanMessage(content=prompt_text)])
+            response = get_llm().invoke([HumanMessage(content=prompt_text)])
             cl_text = _normalize_llm_content(getattr(response, "content", ""))
             if not cl_text:
                 raise ValueError("LLM returned empty cover letter content")
@@ -1851,7 +2114,7 @@ def download_cover_letter():
 
             # Encode the whole text safely to latin-1, then write in one shot
             safe_text = text.encode('latin-1', 'replace').decode('latin-1')
-            pdf.multi_cell(0, 6, safe_text)
+            pdf.multi_cell(w=0, h=6, txt=safe_text)
 
             pdf_bytes = bytes(pdf.output())
             from flask import send_file
@@ -1900,23 +2163,84 @@ def download_cover_letter():
 
 
 
-@app.route("/contact")
-def contact():
-    return render_template("contact.html")
+@app.route("/api/help-bot", methods=["POST"])
+def help_bot():
+    """AI assistant specialized in answering questions about the project sections."""
+    try:
+        data = request.get_json(silent=True) or {}
+        user_message = data.get("message", "").strip()
+        if not user_message:
+            return jsonify({"error": "Empty message"}), 400
 
-@app.route("/mock-interview/", defaults={"path": ""})
-@app.route("/mock-interview/<path:path>")
-def serve_mock_interview(path):
-    return render_template("mock-interview.html")
+        # --- Personalization ---
+        user = _get_user_from_request()
+        user_name = user.get('full_name', 'there') if user else 'there'
+        first_name = user_name.split()[0] if user_name != 'there' else 'friend'
 
-@app.route("/documentation")
-def documentation():
-    return render_template("documentation.html")
+        # --- Rule-based frank & friendly fallback ---
+        msg_lower = user_message.lower()
+        
+        # Social & Identity
+        if any(w in msg_lower for w in ["your name", "who are you"]):
+            return jsonify({"response": f"I'm your **InternAI Guide**, {first_name}! Think of me as your personal career coach. I'm built to help you navigate this platform and land that dream internship. 🚀", "status": "success"})
+        if any(w in msg_lower for w in ["hello", "hi", "hey"]):
+            return jsonify({"response": f"Hey {first_name}! 👋 Great to see you. Ready to crush some internship applications today? How can I help?", "status": "success"})
+        if any(w in msg_lower for w in ["thank", "thanks"]):
+            return jsonify({"response": f"No worries, {first_name}! Always happy to help. You've got this! Anything else on your mind?", "status": "success"})
+        if "bye" in msg_lower or "goodbye" in msg_lower:
+            return jsonify({"response": f"Catch you later, {first_name}! Go get 'em! I'll be right here if you need me again. 👋", "status": "success"})
+        if "how are you" in msg_lower:
+            return jsonify({"response": f"I'm doing great, {first_name}! Especially when I'm helping talented people like you find their next big opportunity. How's your search going?", "status": "success"})
+            
+        # Feature guidance (Frank style)
+        if "cover letter" in msg_lower:
+            return jsonify({"response": f"Look, {first_name}, writing cover letters is a pain. That's why I've got the **Cover Letter AI** for you. Just head to your **Dashboard**, find 'Smart Writing', and let me handle the heavy lifting. It'll tailor everything to your resume in seconds!", "status": "success"})
+        if "scan" in msg_lower or "job" in msg_lower or "internship" in msg_lower:
+            return jsonify({"response": f"Searching for jobs is exhausting, I get it. Check out the **'AI Job Scanner'** in the sidebar. I've programmed it to hunt through LinkedIn, Unstop, and others so you don't have to. Just upload your resume and let me find the gold for you!", "status": "success"})
+        if "interview" in msg_lower or "mock" in msg_lower:
+            return jsonify({"response": f"Interview nerves are real, {first_name}! But practice makes perfect. Use the **'Mock Interview'** tool in the sidebar. It's a full-on simulation with an AI proctor that will actually give you feedback on how to improve.", "status": "success"})
+        if "resume" in msg_lower or "analyze" in msg_lower:
+            return jsonify({"response": f"Your resume is your ticket in! Click **'Analyze Saved Resume'** on the Bot page. I'll rip through it, find your best skills, and show you exactly where you stand in the market right now.", "status": "success"})
+
+        system_prompt = f"""You are the InternAI Guide Bot, a frank, friendly, and highly personalized career assistant. 
+        You are talking to {user_name}. Use their name occasionally to keep it personal.
+        
+        Platform Sections:
+        1. AI Job Scanner: Scans multiple platforms (LinkedIn, Unstop, etc.) for live roles.
+        2. Mock Interview AI: Real-time proctored simulation for interview practice.
+        3. Cover Letter AI: Tailors professional letters to specific job descriptions.
+        4. Dashboard: Central hub for match scores, skill gaps, and market trends.
+        
+        Style: Be very frank, honest, and supportive. Use a conversational tone as if you're a mentor. Use emojis.
+        """
+
+        messages = [
+            SystemMessage(content=system_prompt),
+            HumanMessage(content=user_message)
+        ]
+        
+        ai_response = ""
+        llm_instance = get_llm()
+        if llm_instance:
+            try:
+                response = llm_instance.invoke(messages)
+                ai_response = _normalize_llm_content(getattr(response, "content", ""))
+            except:
+                pass
+        
+        if not ai_response:
+            ai_response = f"I'm here for you, {first_name}! Whether you want to scan for new jobs, practice for an interview, or just chat about your career path, just let me know what's up."
+        
+        return jsonify({
+            "response": ai_response,
+            "status": "success"
+        })
+    except Exception as e:
+        print(f"Error in /api/help-bot: {e}")
+        return jsonify({"error": str(e)}), 500
 
 
-@app.route("/privacy")
-def privacy():
-    return render_template("privacy.html")
+# Routes consolidated above
 
 
 @app.route("/scan", methods=["POST"])
@@ -2053,7 +2377,7 @@ def chat():
                 ai_response = tool_output
         else:
             # Only run the LLM natively if it's conversational small talk
-            llm_with_tools = llm.bind_tools(tools)
+            llm_with_tools = get_llm().bind_tools(tools)
             ai_msg = llm_with_tools.invoke(history)
             
             if ai_msg.tool_calls:
@@ -2335,6 +2659,82 @@ def generate_interview_questions():
         return jsonify({'error': str(e)}), 500
 
 
+
+# ──────────────────────────────────────────────
+# ATS System - Match Analysis
+# ──────────────────────────────────────────────
+@app.route('/api/bot/check-ats', methods=['POST'])
+def check_ats_score():
+    """Detailed ATS analysis between stored resume and a specific job card."""
+    data = request.get_json() or {}
+    sid = data.get('session_id')
+    job_title = data.get('job_title', 'Unknown Role')
+    job_desc = data.get('job_description', '')
+    
+    if not sid:
+        return jsonify({"error": "No session ID provided"}), 400
+    
+    # Try to find user by session_id
+    user = db.get_user_by_session_id(sid)
+    
+    resume_text = ""
+    if user:
+        resume_text = user.get('resume_text', '')
+    
+    # If no resume text in DB, try to extract from the PDF file if it exists
+    if not resume_text:
+        filepath = os.path.join(UPLOAD_FOLDER, f"{sid}.pdf")
+        if os.path.exists(filepath):
+            try:
+                from mock_interview import extract_text_from_pdf
+                with open(filepath, 'rb') as f:
+                    resume_text = extract_text_from_pdf(io.BytesIO(f.read()))
+            except Exception as e:
+                print(f"[ATS] Extraction error: {e}")
+
+    if not resume_text:
+        return jsonify({"error": "Please upload your resume first to run a detailed ATS check."}), 400
+
+    llm = get_llm()
+    if not llm:
+        return jsonify({"error": "AI service is currently unavailable."}), 503
+    
+    prompt = f"""
+    Perform a professional, encouraging ATS (Applicant Tracking System) analysis for this internship match.
+    Be very specific and actionable.
+    
+    INTERNSHIP: {job_title}
+    DESCRIPTION: {job_desc}
+    
+    CANDIDATE PROFILE:
+    {resume_text[:4000]}
+    
+    Return ONLY a JSON object with:
+    - match_score: (Integer 0-100)
+    - match_level: (String: "High Match", "Potential Match", "Gap Detected")
+    - missing_keywords: (Array of technical terms missing)
+    - strengths: (Array of 3 fit points)
+    - improvements: (Array of 3 specific resume editing tips)
+    - verdict: (A 2-sentence summary)
+    """
+    
+    try:
+        from langchain_core.messages import HumanMessage
+        resp = llm.invoke([HumanMessage(content=prompt)])
+        # Clean up possible markdown in response
+        raw_content = resp.content.strip()
+        if "```json" in raw_content:
+            raw_content = raw_content.split("```json")[1].split("```")[0].strip()
+        elif "```" in raw_content:
+             raw_content = raw_content.split("```")[1].split("```")[0].strip()
+        
+        analysis = json.loads(raw_content)
+        return jsonify(analysis)
+    except Exception as e:
+        print(f"[ATS] Error: {e}")
+        import traceback; traceback.print_exc()
+        return jsonify({"error": "Failed to generate ATS analysis. Please try again."}), 500
+
 @app.route('/api/fast-extract-skills', methods=['POST'])
 def fast_extract_skills():
     if 'resume' not in request.files:
@@ -2358,8 +2758,6 @@ def fast_extract_skills():
 # Run the server
 # ──────────────────────────────────────────────
 if __name__ == "__main__":
-    setup_llm()
-    setup_agent()
     host = os.getenv("HOST", "0.0.0.0")
     port = int(os.getenv("PORT", "5000"))
     debug_flag = os.getenv("DEBUG", "").strip().lower() in {"1", "true", "yes"}
@@ -2383,4 +2781,3 @@ if __name__ == "__main__":
     else:
         print("[DEV] Running Flask debug server")
         app.run(debug=True, host=host, port=port, threaded=True, use_reloader=True)
-print("[FINISH] app.py loaded")
