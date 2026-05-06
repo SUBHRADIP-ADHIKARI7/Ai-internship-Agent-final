@@ -999,7 +999,11 @@ def generate_resume():
             ]
             pool = phrase_filtered or filtered or options
             return random.choice(pool)
-        
+        # FPDF Sanitization: Remove non-Latin-1 characters to prevent UnicodeEncodeError
+        def sanitize_for_fpdf(text):
+            if not text: return ""
+            return text.encode('latin-1', 'ignore').decode('latin-1')
+
         # Professional FPDF Generation
         class ProResumePDF(FPDF):
             def header(self):
@@ -1028,18 +1032,18 @@ def generate_resume():
         pdf.set_text_color(255, 255, 255)
         name = f"{data.get('firstName', '')} {data.get('lastName', '')}".strip()
         if not name: name = user.get('full_name') or 'Professional Name'
-        pdf.cell(0, 10, txt=name.upper(), ln=True, align='C')
+        pdf.cell(0, 10, txt=sanitize_for_fpdf(name.upper()), ln=True, align='C')
         
         # Role
         pdf.set_font('Arial', '', 14)
         pdf.set_text_color(200, 220, 255)
-        pdf.cell(0, 8, txt=data.get('profession', 'Software Engineer').upper(), ln=True, align='C')
+        pdf.cell(0, 8, txt=sanitize_for_fpdf(data.get('profession', 'Software Engineer').upper()), ln=True, align='C')
         
         # Contact Info
         pdf.set_font('Arial', '', 10)
         pdf.set_text_color(255, 255, 255)
         contact = f"{data.get('location', '')}  |  {data.get('phone', '')}  |  {data.get('email', '')}"
-        pdf.cell(0, 6, txt=contact, ln=True, align='C')
+        pdf.cell(0, 6, txt=sanitize_for_fpdf(contact), ln=True, align='C')
         
         pdf.set_y(55) # Move below header
         
@@ -1048,7 +1052,7 @@ def generate_resume():
             pdf.ln(4)
             pdf.set_font('Arial', 'B', 14)
             pdf.set_text_color(accent_r, accent_g, accent_b)
-            pdf.cell(0, 8, txt=title.upper(), ln=True)
+            pdf.cell(0, 8, txt=sanitize_for_fpdf(title.upper()), ln=True)
             # Horizontal line
             y = pdf.get_y()
             pdf.set_draw_color(accent_r, accent_g, accent_b)
@@ -1444,45 +1448,45 @@ OUTPUT - 4 varied bullets starting with dash, NO PREAMBLE."""
         if summary_text:
             add_section_title("Professional Summary")
             pdf.set_font('Arial', '', 11)
-            pdf.multi_cell(0, 6, txt=summary_text)
+            pdf.multi_cell(0, 6, txt=sanitize_for_fpdf(summary_text))
             
         # 3. EXPERIENCE
         if data.get('jobTitle') or data.get('employer'):
             add_section_title("Work Experience")
             pdf.set_font('Arial', 'B', 12)
-            pdf.cell(100, 6, txt=data.get('jobTitle', 'Role'), ln=0)
+            pdf.cell(100, 6, txt=sanitize_for_fpdf(data.get('jobTitle', 'Role')), ln=0)
             
             # Dates aligned right
             pdf.set_font('Arial', 'I', 11)
             dates = f"{data.get('jobStart', '')} - {data.get('jobEnd', '')}"
-            pdf.cell(0, 6, txt=dates, ln=True, align='R')
+            pdf.cell(0, 6, txt=sanitize_for_fpdf(dates), ln=True, align='R')
             
             # Employer
             pdf.set_font('Arial', 'I', 11)
-            pdf.cell(0, 6, txt=data.get('employer', 'Company'), ln=True)
+            pdf.cell(0, 6, txt=sanitize_for_fpdf(data.get('employer', 'Company')), ln=True)
             
             # Description
             pdf.set_font('Arial', '', 11)
-            pdf.multi_cell(0, 6, txt=job_desc_text)
+            pdf.multi_cell(0, 6, txt=sanitize_for_fpdf(job_desc_text))
 
         # 4. EDUCATION
         if data.get('school') or data.get('degree'):
             add_section_title("Education")
             pdf.set_font('Arial', 'B', 12)
-            pdf.cell(100, 6, txt=data.get('school', 'University'), ln=0)
+            pdf.cell(100, 6, txt=sanitize_for_fpdf(data.get('school', 'University')), ln=0)
             
             pdf.set_font('Arial', 'I', 11)
-            pdf.cell(0, 6, txt=data.get('gradYear', ''), ln=True, align='R')
+            pdf.cell(0, 6, txt=sanitize_for_fpdf(data.get('gradYear', '')), ln=True, align='R')
             
             pdf.set_font('Arial', '', 11)
             deg_text = f"{data.get('degree', '')} - {data.get('schoolLoc', '')}"
-            pdf.cell(0, 6, txt=deg_text, ln=True)
+            pdf.cell(0, 6, txt=sanitize_for_fpdf(deg_text), ln=True)
 
         # 5. SKILLS
         if data.get('skills'):
             add_section_title("Skills & Competencies")
             pdf.set_font('Arial', '', 11)
-            pdf.multi_cell(0, 6, txt=data.get('skills'))
+            pdf.multi_cell(0, 6, txt=sanitize_for_fpdf(data.get('skills', '')))
             
         session_id = str(uuid.uuid4())
         filepath = os.path.join(UPLOAD_FOLDER, f"{session_id}.pdf")
@@ -2416,7 +2420,7 @@ def chat():
         error_msg = str(e)
         if "connection error" in error_msg.lower() or "connectionrefusederror" in error_msg.lower():
             return jsonify({
-                "response": "⚠️ **Ollama Error**: Could not connect to local Ollama instance. Please ensure Ollama is running and you have run `ollama run mistral`.",
+                "response": "⚠️ **API Error**: Could not connect to the AI model. Please check your internet connection or API key status.",
                 "status": "success"
             })
         return jsonify({
@@ -2500,7 +2504,8 @@ def upload_resume():
 
         search_query = queries[0]  # primary query for display
 
-        # ── Step 4: Multi-query scraping with STRICT 7-day filter ──────────
+        # ── Step 4: Multi-query parallel scraping with STRICT 7-day filter ──
+        from concurrent.futures import ThreadPoolExecutor, as_completed
         from tools import scrape_linkedin, scrape_indeed, \
                           scrape_freshershub, scrape_internshiphub, scrape_placementindia, \
                           scrape_unstop, scrape_social_media
@@ -2508,25 +2513,33 @@ def upload_resume():
         seen_links = set()
         all_cards = []
 
-        # Run all generated queries to get broad variety
         scrapers = [
             scrape_linkedin, scrape_indeed, 
             scrape_freshershub, scrape_internshiphub, scrape_placementindia,
             scrape_unstop, scrape_social_media
         ]
 
-        for q in queries:
-            for scraper_func in scrapers:
-                try:
-                    # Fetch fresh jobs (7 days) for this query variation
-                    results = scraper_func(q, days_ago=7)
-                    for card in results:
-                        link = card.get("apply_link", "")
-                        if link and link not in seen_links:
-                            seen_links.add(link)
-                            all_cards.append(card)
-                except Exception as e:
-                    print(f"Scraper error for query '{q}': {e}")
+        def run_scraper(s_func, q):
+            try:
+                return s_func(q, days_ago=7)
+            except Exception as e:
+                print(f"Scraper error for query '{q}': {e}")
+                return []
+
+        # Execute all query/scraper combinations in parallel
+        with ThreadPoolExecutor(max_workers=15) as executor:
+            futures = []
+            for q in queries:
+                for s_func in scrapers:
+                    futures.append(executor.submit(run_scraper, s_func, q))
+            
+            for future in as_completed(futures):
+                results = future.result()
+                for card in results:
+                    link = card.get("apply_link", "")
+                    if link and link not in seen_links:
+                        seen_links.add(link)
+                        all_cards.append(card)
 
         all_cards = filter_india_jobs(all_cards)
 

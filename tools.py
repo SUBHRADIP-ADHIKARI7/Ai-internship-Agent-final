@@ -565,29 +565,29 @@ def search_internships(query: str, sources: str = "linkedin,indeed,freshershub,p
     active = [s.strip().lower() for s in sources.split(",")]
     all_cards = []
 
-    if "linkedin" in active:
-        all_cards.extend(scrape_linkedin(clean_query))
+    from concurrent.futures import ThreadPoolExecutor, as_completed
 
-    if "indeed" in active:
-        all_cards.extend(scrape_indeed(clean_query))
-
-    if "remotive" in active:
-        all_cards.extend(scrape_remotive(clean_query))
-
-    if "freshershub" in active:
-        all_cards.extend(scrape_freshershub(clean_query))
-
-    if "internshiphub" in active:
-        all_cards.extend(scrape_internshiphub(clean_query))
-
-    if "placementhub" in active or "placementindia" in active:
-        all_cards.extend(scrape_placementindia(clean_query))
-
-    if "unstop" in active:
-        all_cards.extend(scrape_unstop(clean_query))
-
+    scraper_funcs = []
+    if "linkedin" in active: scraper_funcs.append(lambda: scrape_linkedin(clean_query))
+    if "indeed" in active: scraper_funcs.append(lambda: scrape_indeed(clean_query))
+    if "remotive" in active: scraper_funcs.append(lambda: scrape_remotive(clean_query))
+    if "freshershub" in active: scraper_funcs.append(lambda: scrape_freshershub(clean_query))
+    if "internshiphub" in active: scraper_funcs.append(lambda: scrape_internshiphub(clean_query))
+    if "placementhub" in active or "placementindia" in active: scraper_funcs.append(lambda: scrape_placementindia(clean_query))
+    if "unstop" in active: scraper_funcs.append(lambda: scrape_unstop(clean_query))
     if "social" in active or "twitter" in active or "facebook" in active or "instagram" in active:
-        all_cards.extend(scrape_social_media(clean_query))
+        scraper_funcs.append(lambda: scrape_social_media(clean_query))
+
+    if scraper_funcs:
+        with ThreadPoolExecutor(max_workers=min(len(scraper_funcs), 8)) as executor:
+            future_to_scraper = {executor.submit(f): f for f in scraper_funcs}
+            for future in as_completed(future_to_scraper):
+                try:
+                    res = future.result()
+                    if res and isinstance(res, list):
+                        all_cards.extend(res)
+                except Exception as e:
+                    print(f"[Tools] Parallel Scraper Error: {e}")
 
     # Enforce domestic (India) recommendations only.
     all_cards = filter_india_jobs(all_cards)
