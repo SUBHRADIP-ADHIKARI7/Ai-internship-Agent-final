@@ -1543,8 +1543,7 @@ OUTPUT - 4 varied bullets starting with dash, NO PREAMBLE."""
         # Update user session with the new resume and score
         db.update_user(user['_id'], 
                        session_id=session_id, 
-                       extracted_skills=extracted,
-                       resume_text=f"{summary_text} {job_desc_text} {data.get('skills','')}")
+                       extracted_skills=extracted)
         
         return jsonify({
             'status': 'success', 
