@@ -43,7 +43,7 @@ body.landing-body {
 
 .lb-1 {
     width: 600px; height: 600px;
-    background: #7c6aff;
+    background: #10b981;
     top: -10%; left: -10%;
     animation-delay: 0s;
 }
@@ -58,7 +58,7 @@ body.landing-body {
 
 .lb-3 {
     width: 400px; height: 400px;
-    background: #ff007b;
+    background: #06b6d4;
     top: 40%; left: 40%;
     animation-delay: -10s;
     opacity: 0.4;

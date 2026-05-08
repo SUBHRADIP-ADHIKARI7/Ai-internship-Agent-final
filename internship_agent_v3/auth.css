@@ -25,7 +25,7 @@ body.auth-body {
     flex-direction: column;
     justify-content: center;
     align-items: center;
-    background: radial-gradient(circle at center, rgba(112, 0, 255, 0.1) 0%, #0f172a 70%);
+    background: radial-gradient(circle at center, rgba(16, 185, 129, 0.1) 0%, #0f172a 70%);
     overflow: hidden;
     padding: 3rem;
     text-align: center;
