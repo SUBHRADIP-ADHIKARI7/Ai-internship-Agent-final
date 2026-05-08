@@ -1,7 +1,7 @@
 import modal
 import os
 
-app = modal.App("ai-internship-agent")
+app = modal.App("ai-internship-agent") # v3.1.final-branding
 
 # Define persistent volume for resumes
 volume = modal.Volume.from_name("internai-resumes", create_if_missing=True)

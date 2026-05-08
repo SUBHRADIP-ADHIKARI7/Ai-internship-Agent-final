@@ -11,6 +11,7 @@ import sys
 # Force UTF-8 output so emoji in print() don't crash on Windows terminals
 if hasattr(sys.stdout, 'reconfigure'):
     sys.stdout.reconfigure(encoding='utf-8', errors='replace')
+# BUILD_TAG: 2026-05-09-final-v1
 import json
 import tempfile
 import base64
@@ -93,8 +94,8 @@ load_dotenv()
 
 app = Flask(
     __name__,
-    template_folder="internship_ai_agent",
-    static_folder="internship_ai_agent",
+    template_folder="internship_agent_v3",
+    static_folder="internship_agent_v3",
     static_url_path="/static"
 )
 CORS(app)
