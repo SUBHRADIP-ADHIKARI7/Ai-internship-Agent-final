@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>InternAI — Dashboard</title>
+    <title>InternshipAgent â€” Dashboard</title>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Outfit:wght@300;400;600;700;800;900&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="/static/dashboard.css">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js"></script>
@@ -44,7 +44,7 @@
         <a class="sb-logo" href="/" style="text-decoration:none;cursor:pointer"><div class="sb-logo-icon">AI</div><div class="sb-logo-text">Intern<span>AI</span></div></a>
         <nav class="sb-nav">
             <a class="sb-item active" href="/dashboard"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>Dashboard</a>
-            <a class="sb-item" href="/bot"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35"/></svg>AI Job Scanner</a>
+            <a class="sb-item" href="/bot"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35"/></svg>Job Scanner</a>
             <a class="sb-item" href="/mock-interview/"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"/><path d="M19 10v2a7 7 0 0 1-14 0v-2M12 19v4M8 23h8"/></svg>Mock Interview</a>
             <div class="sb-divider"></div>
             <a class="sb-item" id="navCoverLetter"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>Cover Letter</a>
@@ -53,7 +53,7 @@
         </nav>
         <div class="sb-user">
             <img class="sb-avatar" src="/images/pexels-sora-shimazaki-5668863.jpg" alt="User">
-            <div><div class="sb-uname" id="sidebarName">Loading...</div><div class="sb-urole" id="sidebarRole">—</div></div>
+            <div><div class="sb-uname" id="sidebarName">Loading...</div><div class="sb-urole" id="sidebarRole">â€”</div></div>
         </div>
     </aside>
 
@@ -66,17 +66,17 @@
                 <p id="greetingSubText">Analyzing your career trajectory...</p>
             </div>
             <div class="topbar-actions">
-                <button class="tb-btn tb-btn-ghost" onclick="location.href='/profile'">⚙ Profile</button>
-                <button class="tb-btn tb-btn-primary" onclick="location.href='/bot'">⚡ Live Scan</button>
+                <button class="tb-btn tb-btn-ghost" onclick="location.href='/profile'">âš™ Profile</button>
+                <button class="tb-btn tb-btn-primary" onclick="location.href='/bot'">âš¡ Live Scan</button>
             </div>
         </div>
 
         <!-- Stats Row - Tighter -->
         <div class="stats-row" id="statsRow">
-            <div class="stat-card"><div class="stat-icon" style="background:rgba(0,232,123,0.1);color:var(--green)">🎯</div><div class="stat-val" id="statMatches">0</div><div class="stat-label">Matches</div><div class="stat-badge" style="background:rgba(0,232,123,0.1);color:var(--green)">Live</div></div>
-            <div class="stat-card"><div class="stat-icon" style="background:rgba(0,212,255,0.1);color:var(--cyan)">📊</div><div class="stat-val" id="statScore">0%</div><div class="stat-label">Match Score</div><div class="stat-badge" style="background:rgba(0,212,255,0.1);color:var(--cyan)">AI</div></div>
-            <div class="stat-card"><div class="stat-icon" style="background:rgba(139,92,246,0.1);color:var(--purple)">🎤</div><div class="stat-val" id="statInterviews">0</div><div class="stat-label">Interviews</div></div>
-            <div class="stat-card"><div class="stat-icon" style="background:rgba(245,158,11,0.1);color:var(--orange)">🔥</div><div class="stat-val" id="statStreak">1</div><div class="stat-label">Day Streak</div></div>
+            <div class="stat-card"><div class="stat-icon" style="background:rgba(0,232,123,0.1);color:var(--green)">ðŸŽ¯</div><div class="stat-val" id="statMatches">0</div><div class="stat-label">Matches</div><div class="stat-badge" style="background:rgba(0,232,123,0.1);color:var(--green)">Live</div></div>
+            <div class="stat-card"><div class="stat-icon" style="background:rgba(0,212,255,0.1);color:var(--cyan)">ðŸ“Š</div><div class="stat-val" id="statScore">0%</div><div class="stat-label">Match Score</div><div class="stat-badge" style="background:rgba(0,212,255,0.1);color:var(--cyan)">AI</div></div>
+            <div class="stat-card"><div class="stat-icon" style="background:rgba(139,92,246,0.1);color:var(--purple)">ðŸŽ¤</div><div class="stat-val" id="statInterviews">0</div><div class="stat-label">Interviews</div></div>
+            <div class="stat-card"><div class="stat-icon" style="background:rgba(245,158,11,0.1);color:var(--orange)">ðŸ”¥</div><div class="stat-val" id="statStreak">1</div><div class="stat-label">Day Streak</div></div>
         </div>
 
         <!-- Integrated Main Content to fill space -->
@@ -119,8 +119,8 @@
                     <div class="vc-overlay"></div>
                     <div class="vc-content">
                         <div style="font-size:10px;font-weight:700;color:var(--cyan);text-transform:uppercase;margin-bottom:4px">Real-time Simulation</div>
-                        <div style="font-family:var(--display);font-weight:800;font-size:18px;margin-bottom:6px">Mock Interview AI</div>
-                        <p style="font-size:11px;color:#ccc;margin-bottom:12px">Refine your pitch with our adaptive AI proctor.</p>
+                        <div style="font-family:var(--display);font-weight:800;font-size:18px;margin-bottom:6px">Mock Interview</div>
+                        <p style="font-size:11px;color:#ccc;margin-bottom:12px">Refine your pitch with our adaptive proctor.</p>
                         <button class="tb-btn tb-btn-primary" style="width:100%" onclick="location.href='/mock-interview/'">Start Now</button>
                     </div>
                 </div>
@@ -130,7 +130,7 @@
                     <div class="vc-overlay"></div>
                     <div class="vc-content">
                         <div style="font-size:10px;font-weight:700;color:var(--orange);text-transform:uppercase;margin-bottom:4px">Smart Writing</div>
-                        <div style="font-family:var(--display);font-weight:800;font-size:18px;margin-bottom:6px">Cover Letter AI</div>
+                        <div style="font-family:var(--display);font-weight:800;font-size:18px;margin-bottom:6px">Cover Letter Agent</div>
                         <p style="font-size:11px;color:#ccc;margin-bottom:12px">Generate tailored letters in seconds.</p>
                         <button class="tb-btn" style="width:100%;background:var(--orange);color:#000" id="ctaCoverLetter">Generate Document</button>
                     </div>
@@ -151,11 +151,11 @@
             <div class="vc-overlay" style="background:linear-gradient(90deg,rgba(9,9,11,0.9) 40%,rgba(9,9,11,0.4))"></div>
             <div class="vc-content" style="flex-direction:row;align-items:center;justify-content:space-between;padding:24px 28px">
                 <div>
-                    <div style="font-size:10px;font-weight:700;color:var(--green);text-transform:uppercase;letter-spacing:0.1em;margin-bottom:4px">🔍 AI-Powered</div>
+                    <div style="font-size:10px;font-weight:700;color:var(--green);text-transform:uppercase;letter-spacing:0.1em;margin-bottom:4px">ðŸ” Smart-Powered</div>
                     <div style="font-family:var(--display);font-weight:800;font-size:20px">Scan 8+ Platforms for Internships</div>
-                    <p style="font-size:11px;color:#999;margin-top:4px">LinkedIn · Indeed · Internshala · Glassdoor · Naukri · Unstop · Remotive</p>
+                    <p style="font-size:11px;color:#999;margin-top:4px">LinkedIn Â· Indeed Â· Internshala Â· Glassdoor Â· Naukri Â· Unstop Â· Remotive</p>
                 </div>
-                <button class="tb-btn tb-btn-primary" style="flex-shrink:0;padding:12px 28px;font-size:13px" onclick="location.href='/bot'">⚡ Run AI Scan</button>
+                <button class="tb-btn tb-btn-primary" style="flex-shrink:0;padding:12px 28px;font-size:13px" onclick="location.href='/bot'">âš¡ Run AI Scan</button>
             </div>
         </div>
 
@@ -175,21 +175,21 @@
                 <div class="bento-sub">Your recent mock interview sessions</div>
                 <div id="interviewHistory">
                     <div style="display:flex;align-items:center;gap:12px;padding:10px;border-radius:10px;border:1px solid var(--border);margin-bottom:8px">
-                        <div style="width:36px;height:36px;border-radius:8px;background:rgba(139,92,246,0.1);display:flex;align-items:center;justify-content:center;font-size:14px">🎤</div>
-                        <div style="flex:1"><div style="font-size:12px;font-weight:600">Frontend Developer</div><div style="font-size:10px;color:var(--muted)">Medium • 5 Questions</div></div>
+                        <div style="width:36px;height:36px;border-radius:8px;background:rgba(139,92,246,0.1);display:flex;align-items:center;justify-content:center;font-size:14px">ðŸŽ¤</div>
+                        <div style="flex:1"><div style="font-size:12px;font-weight:600">Frontend Developer</div><div style="font-size:10px;color:var(--muted)">Medium â€¢ 5 Questions</div></div>
                         <div style="font-size:12px;font-weight:700;color:var(--green)">80%</div>
                     </div>
                     <div style="display:flex;align-items:center;gap:12px;padding:10px;border-radius:10px;border:1px solid var(--border);margin-bottom:8px">
-                        <div style="width:36px;height:36px;border-radius:8px;background:rgba(0,212,255,0.1);display:flex;align-items:center;justify-content:center;font-size:14px">🎤</div>
-                        <div style="flex:1"><div style="font-size:12px;font-weight:600">Python Developer</div><div style="font-size:10px;color:var(--muted)">Hard • 8 Questions</div></div>
+                        <div style="width:36px;height:36px;border-radius:8px;background:rgba(0,212,255,0.1);display:flex;align-items:center;justify-content:center;font-size:14px">ðŸŽ¤</div>
+                        <div style="flex:1"><div style="font-size:12px;font-weight:600">Python Developer</div><div style="font-size:10px;color:var(--muted)">Hard â€¢ 8 Questions</div></div>
                         <div style="font-size:12px;font-weight:700;color:var(--cyan)">72%</div>
                     </div>
                     <div style="display:flex;align-items:center;gap:12px;padding:10px;border-radius:10px;border:1px solid var(--border)">
-                        <div style="width:36px;height:36px;border-radius:8px;background:rgba(245,158,11,0.1);display:flex;align-items:center;justify-content:center;font-size:14px">🎤</div>
-                        <div style="flex:1"><div style="font-size:12px;font-weight:600">Data Science</div><div style="font-size:10px;color:var(--muted)">Easy • 4 Questions</div></div>
+                        <div style="width:36px;height:36px;border-radius:8px;background:rgba(245,158,11,0.1);display:flex;align-items:center;justify-content:center;font-size:14px">ðŸŽ¤</div>
+                        <div style="flex:1"><div style="font-size:12px;font-weight:600">Data Science</div><div style="font-size:10px;color:var(--muted)">Easy â€¢ 4 Questions</div></div>
                         <div style="font-size:12px;font-weight:700;color:var(--orange)">90%</div>
                     </div>
-                    <button class="tb-btn tb-btn-ghost" style="width:100%;margin-top:12px;font-size:11px" onclick="location.href='/mock-interview/'">View All Sessions →</button>
+                    <button class="tb-btn tb-btn-ghost" style="width:100%;margin-top:12px;font-size:11px" onclick="location.href='/mock-interview/'">View All Sessions â†’</button>
                 </div>
             </div>
         </div>
@@ -229,8 +229,8 @@
     <div class="bento" style="max-width:550px;width:100%;box-shadow:0 40px 100px rgba(0,0,0,0.9)">
         <div style="height:3px;background:linear-gradient(90deg,var(--orange),#ff8c00);position:absolute;top:0;left:0;right:0;border-radius:16px 16px 0 0"></div>
         <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px">
-            <div class="bento-title">✉️ Cover Letter AI</div>
-            <button id="clClose" style="width:32px;height:32px;border-radius:10px;background:rgba(255,255,255,0.05);color:#fff;display:flex;align-items:center;justify-content:center">✕</button>
+            <div class="bento-title">âœ‰ï¸ Cover Letter Agent</div>
+            <button id="clClose" style="width:32px;height:32px;border-radius:10px;background:rgba(255,255,255,0.05);color:#fff;display:flex;align-items:center;justify-content:center">âœ•</button>
         </div>
         <div style="display:grid;grid-template-columns: 1fr 1fr;gap:12px;margin-bottom:12px">
             <div><label style="font-size:10px;color:var(--muted);font-weight:600;text-transform:uppercase;display:block;margin-bottom:5px">Target Role</label><input type="text" id="clTitle" placeholder="Frontend Developer" style="width:100%;background:rgba(0,0,0,0.4);border:1px solid var(--border);border-radius:10px;padding:10px;color:#fff;font-size:13px;outline:none"></div>
@@ -274,9 +274,9 @@ async function loadProfile() {
         if (data.profile) {
             const p = data.profile;
             const name = p.fullName || p.email?.split('@')[0] || 'User';
-            $('#greetingText').textContent = `${greet}, ${name.split(' ')[0]} 👋`;
+            $('#greetingText').textContent = `${greet}, ${name.split(' ')[0]} ðŸ‘‹`;
             $('#sidebarName').textContent = name;
-            $('#sidebarRole').textContent = p.role || 'AI Profile Active';
+            $('#sidebarRole').textContent = p.role || 'Profile Active';
             if (p.extractedSkills?.length) renderSkills(p.extractedSkills);
         }
     } catch(e) { console.log('Profile load err:', e); }
@@ -317,7 +317,7 @@ async function loadDashboard(customFd = null) {
         renderGap(d.skillGap || []);
         
         // Update name
-        if (d.name) { $('#sidebarName').textContent = d.name; $('#greetingText').textContent = `${greet}, ${d.name.split(' ')[0]} 👋`; }
+        if (d.name) { $('#sidebarName').textContent = d.name; $('#greetingText').textContent = `${greet}, ${d.name.split(' ')[0]} ðŸ‘‹`; }
     } catch(e) { console.log('Dashboard err:', e); showFallback(''); }
 }
 
@@ -340,7 +340,7 @@ function renderSkills(skills) {
 
 function renderJobs(jobs) {
     if (!jobs || !jobs.length) { 
-        $('#jobFeed').innerHTML = '<div style="display:flex;flex-direction:column;align-items:center;justify-content:center;height:350px;color:var(--muted);text-align:center;border:1px dashed rgba(255,255,255,0.1);border-radius:12px;background:rgba(255,255,255,0.01)"><div style="font-size:32px;margin-bottom:10px">📭</div><div style="font-weight:600;color:#fff;margin-bottom:4px">No Matches Yet</div><div style="font-size:11px">Upload a more detailed resume to get AI recommendations</div></div>'; 
+        $('#jobFeed').innerHTML = '<div style="display:flex;flex-direction:column;align-items:center;justify-content:center;height:350px;color:var(--muted);text-align:center;border:1px dashed rgba(255,255,255,0.1);border-radius:12px;background:rgba(255,255,255,0.01)"><div style="font-size:32px;margin-bottom:10px">&#128240;</div><div style="font-weight:600;color:#fff;margin-bottom:4px">No Matches Yet</div><div style="font-size:11px">Upload a more detailed resume to get personalized recommendations</div></div>'; 
         return; 
     }
     const colors = ['linear-gradient(135deg,#00E87B,#00D4FF)','linear-gradient(135deg,#8B5CF6,#EC4899)','linear-gradient(135deg,#F59E0B,#EF4444)','linear-gradient(135deg,#3B82F6,#06B6D4)','linear-gradient(135deg,#10B981,#6366F1)'];
@@ -350,7 +350,7 @@ function renderJobs(jobs) {
         const scoreBg = j.matchScore >= 90 ? 'rgba(0,232,123,0.1)' : j.matchScore >= 80 ? 'rgba(0,212,255,0.1)' : 'rgba(245,158,11,0.1)';
         return `<div class="job-item" onclick="if('${j.url}'!=='#')window.open('${j.url}','_blank')">
             <div class="job-logo" style="background:${colors[i%5]}">${initial}</div>
-            <div style="flex:1;min-width:0"><div class="job-title">${j.title}</div><div class="job-meta">${j.company||'Company'} • ${j.mode||'On-site'}</div></div>
+            <div style="flex:1;min-width:0"><div class="job-title">${j.title}</div><div class="job-meta">${j.company||'Company'} â€¢ ${j.mode||'On-site'}</div></div>
             <div class="job-score" style="background:${scoreBg};color:${scoreColor}">${j.matchScore}%</div>
         </div>`;
     }).join('');
@@ -358,7 +358,7 @@ function renderJobs(jobs) {
 
 function renderTrends(trends) {
     if (!trends || !trends.length) {
-        $('#trendsContainer').innerHTML = '<div style="display:flex;flex-direction:column;align-items:center;justify-content:center;height:120px;color:var(--muted);text-align:center"><div style="font-size:24px;margin-bottom:5px">📉</div><div style="font-size:11px">Not enough data to show trends</div></div>';
+        $('#trendsContainer').innerHTML = '<div style="display:flex;flex-direction:column;align-items:center;justify-content:center;height:120px;color:var(--muted);text-align:center"><div style="font-size:24px;margin-bottom:5px">ðŸ“‰</div><div style="font-size:11px">Not enough data to show trends</div></div>';
         return;
     }
     const maxPct = Math.max(...trends.map(t=>t.percent));
@@ -370,7 +370,7 @@ function renderTrends(trends) {
 
 function renderGap(gaps) {
     if (!gaps || !gaps.length) {
-        $('#gapContainer').innerHTML = '<div style="grid-column:1/-1;display:flex;flex-direction:column;align-items:center;justify-content:center;height:150px;color:var(--muted);text-align:center"><div style="font-size:24px;margin-bottom:5px">🔍</div><div style="font-size:11px">Upload a resume to unlock your skill gap analysis</div></div>';
+        $('#gapContainer').innerHTML = '<div style="grid-column:1/-1;display:flex;flex-direction:column;align-items:center;justify-content:center;height:150px;color:var(--muted);text-align:center"><div style="font-size:24px;margin-bottom:5px">ðŸ”</div><div style="font-size:11px">Upload a resume to unlock your skill gap analysis</div></div>';
         return;
     }
     const pColors = { high: 'var(--green)', medium: 'var(--cyan)', low: 'var(--muted)' };
@@ -411,7 +411,7 @@ $('#clClose').onclick = closeCL;
 $('#clGenerate').onclick = async () => {
     const btn = $('#clGenerate'), err = $('#clError'), result = $('#clResult');
     err.style.display = 'none'; result.style.display = 'none';
-    btn.disabled = true; btn.textContent = '⏳ Generating...';
+    btn.disabled = true; btn.textContent = 'â³ Generating...';
     const fd = new FormData();
     fd.append('jobTitle', $('#clTitle').value);
     fd.append('company', $('#clCompany').value);
@@ -456,8 +456,8 @@ const DEMO_SKILLS = ['Python','JavaScript','React','Machine Learning','Node.js',
 const DEMO_JOBS = [
   {title:'Software Engineering Intern',company:'Google',mode:'Remote',matchScore:98,url:'#',insight:{tag:'FAANG',color:'#f59e0b'}},
   {title:'AI Research Intern',company:'Meta',mode:'Hybrid',matchScore:95,url:'#',insight:{tag:'Research',color:'#4da0ff'}},
-  {title:'Full Stack Developer Intern',company:'Stripe',mode:'On-site',matchScore:91,url:'#',insight:{tag:'Startup',color:'#a855f7'}},
-  {title:'ML Engineer Intern',company:'OpenAI',mode:'Remote',matchScore:89,url:'#',insight:{tag:'AI-First',color:'#00D4FF'}},
+  {title:'Research Intern',company:'Meta',mode:'Hybrid',matchScore:95,url:'#',insight:{tag:'Research',color:'#4da0ff'}},
+  {title:'ML Engineer Intern',company:'OpenAI',mode:'Remote',matchScore:89,url:'#',insight:{tag:'Tech-First',color:'#00D4FF'}},
   {title:'Cloud DevOps Intern',company:'AWS',mode:'Remote',matchScore:84,url:'#',insight:{tag:'Cloud',color:'#10B981'}}
 ];
 const DEMO_TRENDS = [
@@ -477,8 +477,8 @@ animateNum($('#statScore'), 87, '%');
 animateNum($('#statInterviews'), 3);
 animateNum($('#statStreak'), 5);
 $('#sidebarName').textContent = 'User';
-$('#sidebarRole').textContent = 'AI Profile Active';
-$('#greetingText').textContent = `${greet}, there 👋`;
+$('#sidebarRole').textContent = 'Agent Profile Active';
+$('#greetingText').textContent = `${greet}, there ðŸ‘‹`;
 
 // ===== INIT =====
 // Removed GSAP opacity animation for bentos to prevent them from getting stuck at opacity:0
@@ -497,3 +497,4 @@ function logoutDashboard() {
 </script>
 </body>
 </html>
+

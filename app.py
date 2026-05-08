@@ -102,8 +102,12 @@ app.config['MAX_CONTENT_LENGTH'] = 32 * 1024 * 1024  # 32 MB max upload
 
 @app.after_request
 def add_header(response):
-    """Add cache headers for static assets to improve load speed."""
-    if request.path.startswith('/images/') or request.path.endswith(('.mp4', '.jpg', '.png', '.css', '.js')):
+    """Add cache headers for static assets to improve load speed, but disable for HTML."""
+    if request.path.endswith(('.html', '/')) or '/mock-interview' in request.path:
+        response.headers["Cache-Control"] = "no-cache, no-store, must-revalidate"
+        response.headers["Pragma"] = "no-cache"
+        response.headers["Expires"] = "0"
+    elif request.path.startswith('/images/') or request.path.endswith(('.mp4', '.jpg', '.png', '.css', '.js')):
         response.cache_control.max_age = 604800 # 1 week
     return response
 
@@ -815,7 +819,7 @@ if not GOOGLE_API_KEY:
 tools = [search_internships]
 
 # System prompt for the AI agent (Optimized for speed & anti-hallucination)
-SYSTEM_PROMPT = """You are an AI Internship Finder Agent. Your goal is to help students find internships efficiently.
+SYSTEM_PROMPT = """You are InternshipAgent. Your goal is to help students find internships efficiently.
 
 RULES:
 1. ALWAYS use the `search_internships` tool to find internships.
@@ -1511,35 +1515,61 @@ OUTPUT - 4 varied bullets starting with dash, NO PREAMBLE."""
             if data.get('email') and data.get('phone'): s += 15
             return min(98, s)
 
+        def sanitize_latex(text):
+            if not text: return ""
+            return text.replace('&', '\\&').replace('%', '\\%').replace('$', '\\$').replace('#', '\\#')
+
         def get_latex():
-            return f"""\\documentclass[11pt,a4paper,sans]{{moderncv}}
-\\moderncvstyle{{classic}}
-\\moderncvcolor{{blue}}
-\\usepackage[utf8]{{inputenc}}
-\\usepackage[scale=0.75]{{geometry}}
+            summary = sanitize_latex(summary_text)
+            experience = sanitize_latex(job_desc_text)
+            skills = sanitize_latex(data.get('skills', ''))
+            
+            return r"""\documentclass[11pt,a4paper,sans]{{moderncv}}
+\moderncvstyle{{classic}}
+\moderncvcolor{{blue}}
+\usepackage[utf8]{{inputenc}}
+\usepackage[scale=0.75]{{geometry}}
 
-\\name{{{data.get('firstName', '')}}}{{{data.get('lastName', '')}}}
-\\title{{{data.get('profession', 'Software Engineer')}}}
-\\address{{{data.get('location', 'Global')}}}
-\\phone[mobile]{{{data.get('phone', '')}}}
-\\email{{{data.get('email', '')}}}
+\name{{{firstName}}}{{{lastName}}}
+\title{{{profession}}}
+\address{{{location}}}
+\phone[mobile]{{{phone}}}
+\email{{{email}}}
 
-\\begin{{document}}
-\\makecvtitle
+\begin{document}
+\makecvtitle
 
-\\section{{Summary}}
-{summary_text.replace('&', '\\&').replace('%', '\\%') if summary_text else ""}
+\section{{Summary}}
+{summary}
 
-\\section{{Experience}}
-\\cventry{{{data.get('jobStart', '')}--{data.get('jobEnd', 'Present')}}}{{{data.get('jobTitle', 'Role')}}}{{{data.get('employer', 'Company')}}}{{}}{{{}}}{{{job_desc_text.replace('&', '\\&').replace('%', '\\%') if job_desc_text else ""}}}
+\section{{Experience}}
+\cventry{{{jobStart}--{jobEnd}}}{{{jobTitle}}}{{{employer}}}{{}}{{}}{{{experience}}}
 
-\\section{{Education}}
-\\cventry{{{data.get('gradYear', '')}}}{{{data.get('degree', '')}}}{{{data.get('school', '')}}}{{{data.get('schoolLoc', '')}}}{{}}{{}}
+\section{{Education}}
+\cventry{{{gradYear}}}{{{degree}}}{{{school}}}{{{schoolLoc}}}{{}}{{}}
 
-\\section{{Skills}}
-\\cvitem{{Technical}}{{{data.get('skills', '').replace('&', '\\&').replace('%', '\\%')}}}
+\section{{Skills}}
+\cvitem{{Technical}}{{{skills}}}
 
-\\end{{document}}"""
+\end{document}""".format(
+                firstName=data.get('firstName', ''),
+                lastName=data.get('lastName', ''),
+                profession=data.get('profession', 'Software Engineer'),
+                location=data.get('location', 'Global'),
+                phone=data.get('phone', ''),
+                email=data.get('email', ''),
+                summary=summary,
+                jobStart=data.get('jobStart', ''),
+                jobEnd=data.get('jobEnd', 'Present'),
+                jobTitle=data.get('jobTitle', 'Role'),
+                employer=data.get('employer', 'Company'),
+                experience=experience,
+                gradYear=data.get('gradYear', ''),
+                degree=data.get('degree', ''),
+                school=data.get('school', ''),
+                schoolLoc=data.get('schoolLoc', ''),
+                skills=skills
+            )
 
         ats_score = calc_ats_score()
         latex_code = get_latex()

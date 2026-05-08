@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="en">
 <head>
 <script src="https://cdn.tailwindcss.com"></script>
@@ -30,14 +30,14 @@
 
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>AI Internship Finder Agent</title>
+    <title>Internship Agent Agent</title>
     <meta name="description" content="Upload your resume and let AI find the perfect internships for you.">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
     <style>
-        /* ═══════════════════════════════════════
+        /* â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
            CSS RESET & VARIABLES
-           ═══════════════════════════════════════ */
+           â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• */
         *, *::before, *::after {
             margin: 0;
             padding: 0;
@@ -78,9 +78,9 @@
             overflow: hidden;
         }
 
-        /* ═══════════════════════════════════════
+        /* â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
            ANIMATED BACKGROUND
-           ═══════════════════════════════════════ */
+           â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• */
         .bg-grid {
             position: fixed;
             inset: 0;
@@ -109,9 +109,9 @@
             66% { transform: translate(-20px, 15px) scale(0.96); }
         }
 
-        /* ═══════════════════════════════════════
+        /* â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
            LAYOUT
-           ═══════════════════════════════════════ */
+           â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• */
         .app {
             position: relative;
             z-index: 1;
@@ -122,9 +122,9 @@
             margin: 0 auto;
         }
 
-        /* ═══════════════════════════════════════
+        /* â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
            HEADER
-           ═══════════════════════════════════════ */
+           â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• */
         .header {
             display: flex;
             align-items: center;
@@ -170,9 +170,9 @@
 
         @keyframes blink { 0%, 100% { opacity: 1; } 50% { opacity: 0.35; } }
 
-        /* ═══════════════════════════════════════
+        /* â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
            CHAT AREA
-           ═══════════════════════════════════════ */
+           â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• */
         .chat-area {
             flex: 1;
             overflow-y: auto;
@@ -184,9 +184,9 @@
         .chat-area::-webkit-scrollbar-track { background: transparent; }
         .chat-area::-webkit-scrollbar-thumb { background: rgba(124, 106, 255, 0.25); border-radius: 10px; }
 
-        /* ═══════════════════════════════════════
+        /* â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
            WELCOME / UPLOAD HERO
-           ═══════════════════════════════════════ */
+           â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• */
         .welcome {
             text-align: center;
             padding: 30px 20px;
@@ -221,7 +221,7 @@
             max-width: 420px; margin: 0 auto 24px; line-height: 1.65;
         }
 
-        /* ── Drop Zone ── */
+        /* â”€â”€ Drop Zone â”€â”€ */
         .drop-zone {
             position: relative;
             width: 100%;
@@ -274,7 +274,7 @@
             opacity: 0; cursor: pointer;
         }
 
-        /* ── File Selected State ── */
+        /* â”€â”€ File Selected State â”€â”€ */
         .file-selected {
             display: none;
             align-items: center;
@@ -309,7 +309,7 @@
         }
         .file-remove:hover { background: rgba(255, 92, 92, 0.3); }
 
-        /* ── Analyze Button ── */
+        /* â”€â”€ Analyze Button â”€â”€ */
         .analyze-btn {
             display: none;
             max-width: 480px;
@@ -342,7 +342,7 @@
             opacity: 0.6; cursor: not-allowed; transform: none !important;
         }
 
-        /* ── Quick Actions ── */
+        /* â”€â”€ Quick Actions â”€â”€ */
         .divider-text {
             font-size: 12px; color: var(--text-muted);
             margin-bottom: 14px;
@@ -375,9 +375,9 @@
             transform: translateY(-2px);
         }
 
-        /* ═══════════════════════════════════════
+        /* â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
            MESSAGE BUBBLES
-           ═══════════════════════════════════════ */
+           â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• */
         .msg {
             display: flex; gap: 10px;
             margin-bottom: 18px;
@@ -425,9 +425,9 @@
             box-shadow: 0 4px 18px rgba(124, 106, 255, 0.2);
         }
 
-        /* ═══════════════════════════════════════
+        /* â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
            SKILL TAGS EXTRACTED
-           ═══════════════════════════════════════ */
+           â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• */
         .skills-extracted {
             display: flex; flex-wrap: wrap; gap: 6px;
             margin: 10px 0 4px;
@@ -443,9 +443,9 @@
             border: 1px solid rgba(124, 106, 255, 0.18);
         }
 
-        /* ═══════════════════════════════════════
+        /* â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
            INTERNSHIP CARDS
-           ═══════════════════════════════════════ */
+           â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• */
         .cards-wrap { display: flex; flex-direction: column; gap: 12px; margin-top: 14px; }
 
         .intern-card {
@@ -573,12 +573,12 @@
         .ats-section-title { font-size: 14px; font-weight: 700; color: #fff; margin-bottom: 10px; display: flex; align-items: center; gap: 8px; }
         .ats-list { list-style: none; padding: 0; margin: 0; }
         .ats-list li { font-size: 13px; color: var(--text-secondary); margin-bottom: 6px; padding-left: 18px; position: relative; }
-        .ats-list li::before { content: '•'; position: absolute; left: 0; color: var(--accent-1); font-weight: 800; }
+        .ats-list li::before { content: 'â€¢'; position: absolute; left: 0; color: var(--accent-1); font-weight: 800; }
         .ats-verdict { font-size: 13.5px; line-height: 1.6; color: var(--text-muted); padding: 16px; background: rgba(124,106,255,0.05); border-left: 3px solid var(--accent-1); border-radius: 4px; }
 
-        /* ═══════════════════════════════════════
+        /* â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
            TYPING INDICATOR
-           ═══════════════════════════════════════ */
+           â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• */
         .typing { display: none; gap: 10px; margin-bottom: 18px; animation: slideIn 0.3s ease; }
         .typing.visible { display: flex; }
 
@@ -605,9 +605,9 @@
             30% { transform: translateY(-8px); opacity: 1; }
         }
 
-        /* ═══════════════════════════════════════
+        /* â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
            PROCESSING OVERLAY
-           ═══════════════════════════════════════ */
+           â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• */
         .processing-bar {
             display: none;
             align-items: center;
@@ -636,9 +636,9 @@
         .processing-bar .label { font-size: 13px; color: var(--text-secondary); }
         .processing-bar .label strong { color: var(--text-primary); }
 
-        /* ═══════════════════════════════════════
+        /* â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
            INPUT AREA
-           ═══════════════════════════════════════ */
+           â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• */
         .input-area {
             padding: 14px 16px 22px;
             background: rgba(13, 13, 31, 0.92);
@@ -714,9 +714,9 @@
 
         #hiddenFileInput { display: none; }
 
-        /* ═══════════════════════════════════════
+        /* â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
            WELCOME DROPZONE
-        ═══════════════════════════════════════ */
+        â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• */
         .welcome-upload {
             background: rgba(255, 255, 255, 0.03);
             border: 2px dashed rgba(255, 255, 255, 0.15);
@@ -760,9 +760,9 @@
         }
         label.btn-upload-sm:hover { background: rgba(124, 106, 255, 0.12); color: var(--accent-1); }
 
-        /* ═══════════════════════════════════════
+        /* â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
            TOAST
-           ═══════════════════════════════════════ */
+           â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• */
         .toast {
             position: fixed; bottom: 100px; left: 50%;
             transform: translateX(-50%) translateY(16px);
@@ -776,9 +776,9 @@
         .toast.visible { opacity: 1; transform: translateX(-50%) translateY(0); }
         .toast.ok { background: rgba(0, 228, 184, 0.9); }
 
-        /* ═══════════════════════════════════════
+        /* â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
            RESPONSIVE
-           ═══════════════════════════════════════ */
+           â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• */
         @media (max-width: 640px) {
             .msg-body { max-width: 92%; font-size: 13.5px; }
             .header { padding: 10px 14px; }
@@ -793,7 +793,7 @@
             .card-foot { flex-direction: column; gap: 10px; align-items: stretch; }
             .apply-btn, .ats-btn { text-align: center; width: 100%; }
         }
-        /* ── Avatar Container ── */
+        /* â”€â”€ Avatar Container â”€â”€ */
         #avatar-container {
             position: fixed;
             top: 24px;
@@ -819,7 +819,7 @@
     <script src="https://download.agora.io/sdk/release/AgoraRTC_N.js"></script>
 
 <script>
-  // ── Force all background videos to play instantly ──
+  // â”€â”€ Force all background videos to play instantly â”€â”€
   (function() {
     function forcePlay(v) {
       v.muted = true;
@@ -866,16 +866,16 @@
 
         <!-- Header -->
         <header class="header">
-            <a href="/" class="quick-btn" style="border-radius:50%; width:38px; height:38px; display:flex; justify-content:center; align-items:center; padding:0; flex-shrink:0; text-decoration:none;" title="Back to Home">🏠</a>
-            <div class="header-avatar">🤖</div>
+            <a href="/" class="quick-btn" style="border-radius:50%; width:38px; height:38px; display:flex; justify-content:center; align-items:center; padding:0; flex-shrink:0; text-decoration:none;" title="Back to Home">ðŸ </a>
+            <div class="header-avatar">ðŸ¤–</div>
             <div class="header-info">
-                <h1>AI Internship Finder</h1>
+                <h1>Internship Agent</h1>
                 <div class="header-status">
                     <span class="status-dot"></span>
-                    <span>Online — Ready to help</span>
+                    <span>Online â€” Ready to help</span>
                 </div>
             </div>
-            <button class="quick-btn" style="margin-left: auto; background: var(--user-bubble); color: white; border: none; padding: 10px 18px;" onclick="window.location.href='/mock-interview/'">🎤 Practice Mock Interview</button>
+            <button class="quick-btn" style="margin-left: auto; background: var(--user-bubble); color: white; border: none; padding: 10px 18px;" onclick="window.location.href='/mock-interview/'">ðŸŽ¤ Practice Mock Interview</button>
         </header>
 
         <!-- Chat -->
@@ -883,43 +883,43 @@
 
             <!-- Welcome + Upload Hero -->
             <div class="welcome" id="welcomeScreen">
-                <div class="welcome-icon">🤖</div>
-                <h2>AI Internship Finder</h2>
-                <p>Search for internships, get AI-powered recommendations, or practice your interview skills!</p>
+                <div class="welcome-icon">ðŸ¤–</div>
+                <h2>Internship Agent</h2>
+                <p>Search for internships, get Smart-Powered recommendations, or practice your interview skills!</p>
 
                 <!-- Welcome Upload Zone (Analyze Saved) -->
                 <div class="welcome-upload" onclick="analyzeSavedResume()">
-                    <div class="welcome-upload-icon">✅</div>
+                    <div class="welcome-upload-icon">âœ…</div>
                     <div class="welcome-upload-title">Analyze Saved Resume</div>
                     <div class="welcome-upload-sub">We'll use your stored resume to find matching internships instantly</div>
                 </div>
 
                 <!-- Welcome Upload Zone (Upload New) -->
                 <div class="welcome-upload" style="margin-top: 10px; border-style: solid; border-color: var(--accent-1);" onclick="document.getElementById('hiddenFileInput').click()">
-                    <div class="welcome-upload-icon">📎</div>
+                    <div class="welcome-upload-icon">ðŸ“Ž</div>
                     <div class="welcome-upload-title">Upload New Resume</div>
                     <div class="welcome-upload-sub">Upload a new PDF to get updated recommendations</div>
                 </div>
 
                 <!-- Mock Interview Button -->
                 <button class="analyze-btn" style="margin-top:12px;background:linear-gradient(135deg,#7c6aff,#6366f1);cursor:pointer;max-width:480px;margin-left:auto;margin-right:auto;" onclick="window.location.href='/mock-interview/'">
-                    🎤 Start Mock Interview
+                    ðŸŽ¤ Start Mock Interview
                 </button>
 
                 <!-- Divider -->
                 <div class="divider-text" style="margin-top:24px;">or search for internships</div>
                 <div class="quick-actions">
-                    <button class="quick-btn" onclick="quickSend('Find me Python developer internships')">🐍 Python</button>
-                    <button class="quick-btn" onclick="quickSend('Find frontend React internships')">⚛️ Frontend</button>
-                    <button class="quick-btn" onclick="quickSend('Show ML and AI internships')">🧠 ML / AI</button>
-                    <button class="quick-btn" onclick="quickSend('Find remote internships for full stack developer')">🌐 Remote</button>
-                    <button class="quick-btn" onclick="quickSend('Find data science internships')">📊 Data Science</button>
+                    <button class="quick-btn" onclick="quickSend('Find me Python developer internships')">ðŸ Python</button>
+                    <button class="quick-btn" onclick="quickSend('Find frontend React internships')">âš›ï¸ Frontend</button>
+                    <button class="quick-btn" onclick="quickSend('Show ML and AI internships')">ðŸ§  ML / AI</button>
+                    <button class="quick-btn" onclick="quickSend('Find remote internships for full stack developer')">ðŸŒ Remote</button>
+                    <button class="quick-btn" onclick="quickSend('Find data science internships')">ðŸ“Š Data Science</button>
                 </div>
             </div>
 
             <!-- Typing Indicator -->
             <div class="typing" id="typingEl">
-                <div class="msg-avatar" style="background:linear-gradient(135deg,var(--accent-1),var(--accent-2));box-shadow:0 3px 12px rgba(124,106,255,0.2);">🤖</div>
+                <div class="msg-avatar" style="background:linear-gradient(135deg,var(--accent-1),var(--accent-2));box-shadow:0 3px 12px rgba(124,106,255,0.2);">ðŸ¤–</div>
                 <div class="typing-dots"><span></span><span></span><span></span></div>
             </div>
         </div>
@@ -934,8 +934,8 @@
             </div>
             <div class="input-wrap">
                 <input type="text" id="chatInput" placeholder="Ask about internships, skills, locations..." autocomplete="off">
-                <button class="btn-upload-sm" title="Upload New Resume" onclick="document.getElementById('hiddenFileInput').click()">📎</button>
-                <button class="btn-send" id="sendBtn" onclick="sendChat()" title="Send">➤</button>
+                <button class="btn-upload-sm" title="Upload New Resume" onclick="document.getElementById('hiddenFileInput').click()">ðŸ“Ž</button>
+                <button class="btn-send" id="sendBtn" onclick="sendChat()" title="Send">âž¤</button>
             </div>
         </div>
     </div>
@@ -945,7 +945,7 @@
         <div class="modal-content">
             <div class="modal-header">
                 <div class="modal-title">ATS Match Analysis</div>
-                <div class="modal-close" onclick="closeAtsModal()">×</div>
+                <div class="modal-close" onclick="closeAtsModal()">Ã—</div>
             </div>
             <div id="atsResult" class="ats-grid">
                 <!-- Content injected via JS -->
@@ -961,9 +961,9 @@
 
     <script>
     (() => {
-        // ═══════════════════════════════════════
+        // â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
         // STATE
-        // ═══════════════════════════════════════
+        // â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
         const SID = localStorage.getItem('session_id') || ('sess_' + Date.now());
         let busy = false;
         let selectedFile = null;
@@ -976,7 +976,7 @@
             if(!file) return;
 
             hideWelcome();
-            addMsg(`📎 <strong>Uploading and analyzing "${file.name}"...</strong>`, 'ai');
+            addMsg(`ðŸ“Ž <strong>Uploading and analyzing "${file.name}"...</strong>`, 'ai');
             setBusy(true);
 
             const form = new FormData();
@@ -1001,16 +1001,16 @@
                 }
 
                 if (data.error) {
-                    addMsg(`❌ <strong>Upload Issue:</strong> ${data.error}`, 'ai');
+                    addMsg(`âŒ <strong>Upload Issue:</strong> ${data.error}`, 'ai');
                     toast(data.error, 'error');
                 } else {
                     const skills = (data.skills || []).slice(0, 10).join(', ');
                     const role   = data.role || 'Software Engineer';
                     
                     addMsg(
-                        `✨ <strong>Resume processed successfully!</strong><br>` +
-                        `🎯 <strong>Target Role:</strong> ${role}<br>` +
-                        `🧠 <strong>Key Skills:</strong> ${skills}<br><br>` +
+                        `âœ¨ <strong>Resume processed successfully!</strong><br>` +
+                        `ðŸŽ¯ <strong>Target Role:</strong> ${role}<br>` +
+                        `ðŸ§  <strong>Key Skills:</strong> ${skills}<br><br>` +
                         `I'm now finding the best internships for you...`,
                         'ai'
                     );
@@ -1021,7 +1021,7 @@
                 }
             } catch (err) {
                 console.error('[Bot Resume Upload]', err);
-                addMsg(`❌ <strong>Upload failed:</strong> ${err.message}`, 'ai');
+                addMsg(`âŒ <strong>Upload failed:</strong> ${err.message}`, 'ai');
                 toast('Upload failed', 'error');
             } finally {
                 setBusy(false);
@@ -1038,7 +1038,7 @@
             }
 
             hideWelcome();
-            addMsg(`📄 <strong>Analysing your saved resume...</strong>`, 'ai');
+            addMsg(`ðŸ“„ <strong>Analysing your saved resume...</strong>`, 'ai');
             setBusy(true);
 
             const form = new FormData();
@@ -1061,7 +1061,7 @@
                 }
 
                 if (data.error) {
-                    addMsg(`❌ <strong>Analysis Issue:</strong> ${data.error}`, 'ai');
+                    addMsg(`âŒ <strong>Analysis Issue:</strong> ${data.error}`, 'ai');
                     toast(data.error, 'error');
                 } else {
                     const skills = (data.skills || []).slice(0, 10).join(', ');
@@ -1070,10 +1070,10 @@
                     const score  = data.stats?.avgMatchScore || 0;
 
                     addMsg(
-                        `✅ <strong>Resume Analysed!</strong><br>` +
-                        `🎯 <strong>Inferred Role:</strong> ${role}<br>` +
-                        `🧠 <strong>Top Skills:</strong> ${skills}<br>` +
-                        `📋 <strong>${count}</strong> matches found<br><br>` +
+                        `âœ… <strong>Resume Analysed!</strong><br>` +
+                        `ðŸŽ¯ <strong>Inferred Role:</strong> ${role}<br>` +
+                        `ðŸ§  <strong>Top Skills:</strong> ${skills}<br>` +
+                        `ðŸ“‹ <strong>${count}</strong> matches found<br><br>` +
                         `Searching for the best opportunities...`,
                         'ai'
                     );
@@ -1091,16 +1091,16 @@
                     if (parsed.error) msg = parsed.error;
                 } catch(e) {}
                 
-                addMsg(`❌ <strong>Resume analysis failed:</strong> ${msg}`, 'ai');
+                addMsg(`âŒ <strong>Resume analysis failed:</strong> ${msg}`, 'ai');
                 toast('Analysis failed', 'error');
             } finally {
                 setBusy(false);
             }
         };
 
-        // ═══════════════════════════════════════
+        // â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
         // AVATAR LOGIC
-        // ═══════════════════════════════════════
+        // â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
         async function initAvatarSession() {
             try {
                 const res = await fetch('/api/avatar/session', { method: 'POST' });
@@ -1157,9 +1157,9 @@
         const welcomeScreen  = document.getElementById('welcomeScreen');
         const toastEl        = document.getElementById('toast');
 
-        // ═══════════════════════════════════════
+        // â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
         // CHAT
-        // ═══════════════════════════════════════
+        // â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
         chatInput.addEventListener('keydown', e => {
             if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendChat(); }
         });
@@ -1229,7 +1229,7 @@
                 if (data.status === 'success') {
                     if (silent) {
                         // For silent updates, we add a divider
-                        addMsg(`🔄 <strong>Results filtered for:</strong> ${selectedPlatforms.join(', ').toUpperCase()}`, 'ai');
+                        addMsg(`ðŸ”„ <strong>Results filtered for:</strong> ${selectedPlatforms.join(', ').toUpperCase()}`, 'ai');
                     }
                     addMsg(data.response, 'ai');
                     if (!silent) speak(data.response);
@@ -1251,16 +1251,16 @@
             sendChat();
         };
 
-        // ═══════════════════════════════════════
+        // â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
         // ADD MESSAGE
-        // ═══════════════════════════════════════
+        // â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
         function addMsg(text, sender) {
             const div = document.createElement('div');
             div.className = 'msg ' + sender;
 
             const ava = document.createElement('div');
             ava.className = 'msg-avatar';
-            ava.textContent = sender === 'ai' ? '🤖' : '👤';
+            ava.textContent = sender === 'ai' ? 'ðŸ¤–' : 'ðŸ‘¤';
 
             const body = document.createElement('div');
             body.className = 'msg-body';
@@ -1272,9 +1272,9 @@
             scroll();
         }
 
-        // ═══════════════════════════════════════
+        // â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
         // PARSE AI RESPONSE
-        // ═══════════════════════════════════════
+        // â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
         function parseAI(text) {
             let out = text;
 
@@ -1314,9 +1314,9 @@
             return out;
         }
 
-        // ═══════════════════════════════════════
+        // â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
         // RENDER INTERNSHIP CARDS
-        // ═══════════════════════════════════════
+        // â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
         function renderCards(jobs) {
             let h = '<div class="cards-wrap">';
             jobs.forEach(j => {
@@ -1324,7 +1324,7 @@
                     : (j.type||'').toLowerCase().includes('hybrid') ? 'badge-hybrid' : 'badge-onsite';
                 const init = (j.company||'CO').substring(0,2).toUpperCase();
                 const tags = (j.skills||[]).map(s => `<span class="skill-pill">${s}</span>`).join('');
-                const dl = j.deadline ? new Date(j.deadline).toLocaleDateString('en-IN',{day:'numeric',month:'short',year:'numeric'}) : '—';
+                const dl = j.deadline ? new Date(j.deadline).toLocaleDateString('en-IN',{day:'numeric',month:'short',year:'numeric'}) : 'â€”';
 
                 h += `<div class="intern-card">
                     <div class="card-top">
@@ -1336,15 +1336,15 @@
                         <span class="badge ${bc}">${j.type||'On-site'}</span>
                     </div>
                     <div class="card-meta">
-                        <span>📍 ${j.location||'India'}</span>
-                        <span>⏱️ ${j.duration||'—'}</span>
-                        <span>💰 ${j.stipend||'Undisclosed'}</span>
+                        <span>ðŸ“ ${j.location||'India'}</span>
+                        <span>â±ï¸ ${j.duration||'â€”'}</span>
+                        <span>ðŸ’° ${j.stipend||'Undisclosed'}</span>
                     </div>
                     ${j.description ? `<div class="card-desc">${j.description}</div>` : ''}
                     <div class="card-skills">${tags}</div>
                     <div class="card-foot">
                         <button class="ats-btn" onclick="checkATS(this, '${(j.title||'').replace(/'/g,"\\'")}', '${(j.description||'').replace(/'/g,"\\'").substring(0,300)}')">Check Match</button>
-                        <a href="${j.apply_link||'#'}" target="_blank" class="apply-btn">Apply →</a>
+                        <a href="${j.apply_link||'#'}" target="_blank" class="apply-btn">Apply â†’</a>
                     </div>
                 </div>`;
             });
@@ -1352,9 +1352,9 @@
             return h;
         }
 
-        // ═══════════════════════════════════════
+        // â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
         // HELPERS
-        // ═══════════════════════════════════════
+        // â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
         function setBusy(v) {
             busy = v;
             sendBtn.disabled = v;
@@ -1366,9 +1366,9 @@
             if (welcomeScreen) welcomeScreen.style.display = 'none';
         }
 
-        // ═══════════════════════════════════════
+        // â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
         // ATS ANALYSIS
-        // ═══════════════════════════════════════
+        // â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
         window.checkATS = async function(btn, title, desc) {
             const sid = SID;
             if(!sid) {
@@ -1408,32 +1408,32 @@
                     </div>
                     
                     <div>
-                        <div class="ats-section-title">⭐ Key Strengths</div>
+                        <div class="ats-section-title">â­ Key Strengths</div>
                         <ul class="ats-list">
                             ${(data.strengths||[]).map(s => `<li>${s}</li>`).join('')}
                         </ul>
                     </div>
 
                     <div>
-                        <div class="ats-section-title">🔍 Missing Keywords</div>
+                        <div class="ats-section-title">ðŸ” Missing Keywords</div>
                         <div style="display:flex; flex-wrap:wrap; gap:6px;">
                             ${(data.missing_keywords||[]).map(k => `<span class="skill-pill" style="background:rgba(255,92,92,0.1); color:#ff5c5c; border-color:rgba(255,92,92,0.2)">${k}</span>`).join('')}
                         </div>
                     </div>
 
                     <div>
-                        <div class="ats-section-title">💡 How to Improve Score</div>
+                        <div class="ats-section-title">ðŸ’¡ How to Improve Score</div>
                         <ul class="ats-list">
                             ${(data.improvements||[]).map(i => `<li>${i}</li>`).join('')}
                         </ul>
                     </div>
 
                     <div class="ats-verdict">
-                        <strong>AI Verdict:</strong> ${data.verdict}
+                        <strong>Match Verdict:</strong> ${data.verdict}
                     </div>
                 `;
             } catch (err) {
-                resultBox.innerHTML = `<div style="text-align:center; padding:20px; color:#ff5c5c;">Failed to reach AI server.</div>`;
+                resultBox.innerHTML = `<div style="text-align:center; padding:20px; color:#ff5c5c;">Failed to reach server.</div>`;
             }
         };
 
@@ -1454,3 +1454,4 @@
     </script>
 </body>
 </html>
+

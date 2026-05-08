@@ -171,7 +171,7 @@ npm run dev
                ▼
     ┌──────────────────────┐
     │   Home Dashboard     │
-    │ Shows Profile + ✓    │
+    │ Shows Profile + [OK]   │
     └──────────┬───────────┘
                ▼
     ┌──────────────────────┐
@@ -186,7 +186,7 @@ npm run dev
                ▼
     ┌──────────────────────┐
     │    Get Results       │
-    │   Download PDF ✓     │
+    │   Download PDF [OK]    │
     └──────────────────────┘
 ```
 

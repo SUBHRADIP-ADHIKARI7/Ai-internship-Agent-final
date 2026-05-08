@@ -1,9 +1,9 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>InternAI — AI Profile</title>
+    <title>InternshipAgent â€” Profile</title>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Outfit:wght@300;400;600;800;900&display=swap" rel="stylesheet">
     <script src="https://cdn.tailwindcss.com"></script>
     <script>
@@ -48,10 +48,10 @@
         <div class="max-w-4xl mx-auto px-6 py-4 flex justify-between items-center">
             <div class="flex items-center gap-4">
                 <a href="/" class="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-white/10 hover:bg-white/20 transition-colors text-sm font-medium text-white text-decoration-none">
-                    🏠 Home
+                    ðŸ  Home
                 </a>
                 <a href="/dashboard" class="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-white/10 hover:bg-white/20 transition-colors text-sm font-medium text-white text-decoration-none">
-                    🔙 Dashboard
+                    ðŸ”™ Dashboard
                 </a>
             </div>
             <div class="flex items-center gap-4">
@@ -71,7 +71,7 @@
                     <img src="/images/pexels-tima-miroshnichenko-5439152.jpg" class="w-full h-full object-cover rounded-full border-4 border-[#030305]" alt="Profile">
                 </div>
                 <div>
-                    <h1 class="font-display text-4xl font-bold mb-2">Neural Profile</h1>
+                    <h1 class="font-display text-4xl font-bold mb-2">Agent Profile</h1>
                     <p class="text-gray-400">Your AI-extracted digital footprint. Edit your skills below to tune the matchmaking engine.</p>
                 </div>
             </div>
@@ -96,7 +96,7 @@
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                     <div class="glass-panel rounded-2xl p-6 bg-white/5 border-white/10">
                         <h3 class="font-bold text-lg mb-2">Update Source Resume</h3>
-                        <p class="text-sm text-gray-400 mb-4">Upload a new PDF to overwrite the AI's understanding of your background.</p>
+                        <p class="text-sm text-gray-400 mb-4">Upload a new PDF to overwrite the understanding of your background.</p>
                         <div class="flex items-center gap-4">
                             <input type="file" id="resumeUpload" accept=".pdf" class="hidden">
                             <button onclick="document.getElementById('resumeUpload').click()" class="px-6 py-2 rounded-xl bg-white/10 border border-white/20 font-bold hover:bg-white/20 transition-colors">Select PDF</button>
@@ -105,10 +105,10 @@
                     </div>
 
                     <div class="glass-panel rounded-2xl p-6 bg-gradient-to-br from-[#7000ff]/20 to-[#00f0ff]/20 border-[#00f0ff]/30">
-                        <h3 class="font-bold text-lg mb-2 flex items-center gap-2">
-                            <span class="text-2xl">✨</span> AI Resume Builder
+                        <h3 class="text-xl font-bold flex items-center gap-2 mb-2">
+                            <span class="text-2xl">ðŸ“</span> Resume Builder
                         </h3>
-                        <p class="text-sm text-gray-300 mb-4">Don't have a resume? Let AI generate a professional PDF resume from your details.</p>
+                        <p class="text-sm text-gray-300 mb-4">Don't have a resume? Let the system generate a professional PDF resume from your details.</p>
                         <div class="flex gap-3">
                             <button onclick="document.getElementById('resumeWizardModal').classList.remove('hidden')" class="px-6 py-2 rounded-xl bg-[#00f0ff]/20 text-[#00f0ff] border border-[#00f0ff]/50 font-bold hover:bg-[#00f0ff]/30 transition-colors">
                                 Build My Resume
@@ -132,9 +132,9 @@
     <!-- Resume-Now Style Multi-Step Wizard Modal -->
     <div id="resumeWizardModal" class="fixed inset-0 bg-black/90 backdrop-blur-md z-[100] hidden flex flex-col items-center pt-10 px-4 overflow-y-auto">
         <div class="w-full max-w-3xl mb-4 flex justify-between items-center text-white">
-            <h2 class="text-2xl font-display font-bold flex items-center gap-2"><span class="text-[#00f0ff]">✨</span> Pro Resume Builder</h2>
+            <h2 class="text-2xl font-display font-bold flex items-center gap-2"><span class="text-[#00f0ff]">âœ¨</span> Professional Resume Builder</h2>
             <div class="flex items-center gap-3">
-                <button onclick="runDemoResume()" class="px-5 py-2 rounded-xl bg-gradient-to-r from-[#00f0ff] to-[#7000ff] text-white text-xs font-extrabold hover:scale-105 transition-all shadow-[0_0_20px_rgba(0,240,255,0.3)] border-0">TRY DEMO ✨</button>
+                <button onclick="runDemoResume()" class="px-5 py-2 rounded-xl bg-gradient-to-r from-[#00f0ff] to-[#7000ff] text-white text-xs font-extrabold hover:scale-105 transition-all shadow-[0_0_20px_rgba(0,240,255,0.3)] border-0">TRY DEMO âœ¨</button>
                 <button onclick="document.getElementById('resumeWizardModal').classList.add('hidden')" class="text-gray-400 hover:text-white text-3xl ml-2">&times;</button>
             </div>
         </div>
@@ -170,7 +170,7 @@
                             <p class="text-gray-400 text-sm">Employers need to know how to reach you.</p>
                         </div>
                         <button onclick="runDemoResume()" class="hidden md:block px-4 py-2 rounded-xl bg-white/5 border border-white/10 text-[#00f0ff] text-[10px] font-bold hover:bg-white/10 transition-all uppercase tracking-wider">
-                            ⚡ Quick Magic Fill
+                            âš¡ Quick Magic Fill
                         </button>
                     </div>
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
@@ -186,8 +186,8 @@
                 <!-- STEP 2: SUMMARY -->
                 <div id="step2" class="wizard-step hidden">
                     <h3 class="text-2xl font-bold mb-1">Briefly describe your professional value.</h3>
-                    <p class="text-gray-400 text-sm mb-2">This is the first thing employers will read. Don't worry if it's brief—our AI will enhance it!</p>
-                    <p class="text-xs text-gray-500 mb-4">💡 Tip: Include your years of experience, key strengths, and what excites you about the field.</p>
+                    <p class="text-gray-400 text-sm mb-2">This is the first thing employers will read. Don't worry if it's brief-we will enhance it!</p>
+                    <p class="text-xs text-gray-500 mb-4">ðŸ’¡ Tip: Include your years of experience, key strengths, and what excites you about the field.</p>
                     <textarea id="wizSummary" rows="6" placeholder="E.g., I'm a software developer with 2 years of experience in Python and web development. I love building scalable applications and working with teams on challenging problems." class="w-full skeu-input rounded-xl px-4 py-3 text-white leading-relaxed"></textarea>
                 </div>
 
@@ -221,7 +221,7 @@
                 <div id="step5" class="wizard-step hidden">
                     <h3 class="text-2xl font-bold mb-1">What skills should we highlight?</h3>
                     <p class="text-gray-400 text-sm mb-2">These are what employers will look for. Include both technical and soft skills.</p>
-                    <p class="text-xs text-gray-500 mb-4">💡 Tip: List 8-15 skills. Mix technical (Python, React) with soft skills (Communication, Leadership). Separate with commas.</p>
+                    <p class="text-xs text-gray-500 mb-4">ðŸ’¡ Tip: List 8-15 skills. Mix technical (Python, React) with soft skills (Communication, Leadership). Separate with commas.</p>
                     <textarea id="wizSkillsList" rows="5" placeholder="E.g., Python, JavaScript, React, Node.js, REST APIs, Git, Problem Solving, Team Collaboration, Agile, Docker, AWS, Communication" class="w-full skeu-input rounded-xl px-4 py-3 text-white leading-relaxed"></textarea>
                 </div>
 
@@ -297,7 +297,7 @@
                 const data = await res.json();
                 
                 if (res.ok) {
-                    statusSpan.innerText = '✓ Success!';
+                    statusSpan.innerHTML = '&#10003; Success!';
                     statusSpan.style.color = '#10b981';
                     
                     // Update UI with extracted data
@@ -343,7 +343,7 @@
                     body: JSON.stringify(payload)
                 });
                 if(res.ok) {
-                    btn.innerText = 'Saved Successfully ✓';
+                    btn.innerHTML = 'Saved Successfully &#10003;';
                     setTimeout(() => btn.innerText = 'Save Profile Configuration', 2000);
                 }
             } catch(e) {
@@ -431,7 +431,7 @@
                 
                 const data = await res.json();
                 if(res.ok) {
-                    btn.innerText = '✓ Generated!';
+                    btn.innerHTML = '&#10003; Generated!';
                     
                     if(data.latex) {
                         document.getElementById('latexSource').value = data.latex;
@@ -538,3 +538,4 @@
     </script>
 </body>
 </html>
+

@@ -1,9 +1,9 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>InternAI — Create Account</title>
+    <title>InternshipAgent â€” Create Account</title>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Outfit:wght@300;400;600;800;900&display=swap" rel="stylesheet">
     <script src="https://cdn.tailwindcss.com"></script>
     <script>
@@ -59,13 +59,42 @@
             100% { transform: translate(40px, -40px) scale(1.1); }
         }
     </style>
+
+<script>
+  // â”€â”€ Force all background videos to play instantly â”€â”€
+  (function() {
+    function forcePlay(v) {
+      v.muted = true;
+      v.playsInline = true;
+      v.preload = 'auto';
+      var p = v.play();
+      if (p && typeof p.catch === 'function') {
+        p.catch(function() { v.load(); v.play(); });
+      }
+    }
+    function initVideos() {
+      document.querySelectorAll('video').forEach(forcePlay);
+    }
+    if (document.readyState === 'loading') {
+      document.addEventListener('DOMContentLoaded', initVideos);
+    } else {
+      initVideos();
+    }
+    // Retry once window is fully loaded in case of slow network
+    window.addEventListener('load', function() {
+      document.querySelectorAll('video').forEach(function(v) {
+        if (v.paused) forcePlay(v);
+      });
+    });
+  })();
+</script>
 </head>
 <body class="min-h-screen flex items-center justify-center relative py-12">
     <!-- Background matching Landing Page -->
     <div class="ambient-orb" style="width: 500px; height: 500px; background: #00E87B; top: -10%; left: -10%;"></div>
     <div class="ambient-orb" style="width: 400px; height: 400px; background: #00D4FF; bottom: -10%; right: -5%; animation-delay: -5s;"></div>
 
-    <video class="fixed inset-0 w-full h-full object-cover opacity-10 mix-blend-screen z-[-2]" autoplay loop muted playsinline>
+    <video preload="auto" class="fixed inset-0 w-full h-full object-cover opacity-10 mix-blend-screen z-[-2]" autoplay loop muted playsinline>
         <source src="/images/7651776-uhd_3840_2160_30fps.mp4" type="video/mp4">
     </video>
     <div class="fixed inset-0 bg-[radial-gradient(ellipse_at_center,rgba(255,255,255,0.02)1px,transparent_1px)] bg-[size:40px_40px] opacity-20 z-[-2]"></div>
@@ -87,7 +116,7 @@
                 <p class="text-gray-400 text-sm">Upload your resume to instantly auto-fill your profile and unlock AI matching.</p>
             </div>
             
-            <form id="registerForm" class="space-y-5" enctype="multipart/form-data">
+            <form id="registerForm" class="space-y-5" enctype="multipart/form-data" autocomplete="off">
                 
                 <!-- Resume Upload Area -->
                 <div class="relative group">
@@ -116,12 +145,12 @@
 
                 <div>
                     <label class="block text-[11px] font-semibold text-gray-400 mb-2 uppercase tracking-widest">Email Address</label>
-                    <input type="email" id="email" required class="w-full skeu-input rounded-xl px-4 py-3 text-white placeholder-gray-600 font-medium text-sm">
+                    <input type="email" id="email" required autocomplete="off" class="w-full skeu-input rounded-xl px-4 py-3 text-white placeholder-gray-600 font-medium text-sm">
                 </div>
                 
                 <div>
                     <label class="block text-[11px] font-semibold text-gray-400 mb-2 uppercase tracking-widest">Password</label>
-                    <input type="password" id="password" required class="w-full skeu-input rounded-xl px-4 py-3 text-white placeholder-gray-600 font-medium text-sm">
+                    <input type="password" id="password" required autocomplete="new-password" class="w-full skeu-input rounded-xl px-4 py-3 text-white placeholder-gray-600 font-medium text-sm">
                 </div>
                 
                 <div id="error-msg" class="hidden text-red-400 text-sm p-3 rounded-lg bg-red-500/10 border border-red-500/20"></div>
@@ -192,11 +221,16 @@
                 });
                 const data = await res.json();
                 if(res.ok) {
-                    localStorage.setItem('token', data.token);
-                    if(data.session_id) {
-                        localStorage.setItem('session_id', data.session_id);
+                    if (data.status === 'verification_required') {
+                        localStorage.setItem('pending_verification_email', document.getElementById('email').value);
+                        window.location.href = '/verify';
+                    } else {
+                        localStorage.setItem('token', data.token);
+                        if(data.session_id) {
+                            localStorage.setItem('session_id', data.session_id);
+                        }
+                        window.location.href = '/dashboard';
                     }
-                    window.location.href = '/dashboard';
                 } else {
                     throw new Error(data.error || 'Registration failed');
                 }
@@ -210,3 +244,4 @@
     </script>
 </body>
 </html>
+

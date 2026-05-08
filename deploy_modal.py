@@ -11,7 +11,7 @@ image = (
     modal.Image.debian_slim(python_version="3.11")
     .apt_install("poppler-utils")
     .pip_install_from_requirements(os.path.join(os.path.dirname(__file__), "requirements.txt"))
-    .add_local_dir(os.path.dirname(__file__), remote_path="/root", ignore=[".git", "__pycache__"])
+    .add_local_dir(os.path.dirname(__file__), remote_path="/root", ignore=[".git", "__pycache__", "*.md", "test_*.py", "naukri_dom.html"])
 )
 
 @app.function(

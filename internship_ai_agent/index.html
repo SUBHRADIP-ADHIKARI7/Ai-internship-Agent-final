@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>InternAI — Dashboard</title>
+    <title>InternshipAgent — Dashboard</title>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Outfit:wght@300;400;600;800;900&display=swap" rel="stylesheet">
     <script src="https://cdn.tailwindcss.com"></script>
     <script>
@@ -51,13 +51,42 @@
         .job-card { transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1); }
         .job-card:hover { transform: translateY(-5px) translateX(5px); background: rgba(255,255,255,0.06); border-color: rgba(0,240,255,0.4); }
     </style>
+
+<script>
+  // â”€â”€ Force all background videos to play instantly â”€â”€
+  (function() {
+    function forcePlay(v) {
+      v.muted = true;
+      v.playsInline = true;
+      v.preload = 'auto';
+      var p = v.play();
+      if (p && typeof p.catch === 'function') {
+        p.catch(function() { v.load(); v.play(); });
+      }
+    }
+    function initVideos() {
+      document.querySelectorAll('video').forEach(forcePlay);
+    }
+    if (document.readyState === 'loading') {
+      document.addEventListener('DOMContentLoaded', initVideos);
+    } else {
+      initVideos();
+    }
+    // Retry once window is fully loaded in case of slow network
+    window.addEventListener('load', function() {
+      document.querySelectorAll('video').forEach(function(v) {
+        if (v.paused) forcePlay(v);
+      });
+    });
+  })();
+</script>
 </head>
 <body class="flex flex-col min-h-screen">
     <div class="liquid-bg">
         <div class="blob blob-1"></div>
         <div class="blob blob-2"></div>
     </div>
-    <video class="fixed inset-0 w-full h-full object-cover opacity-10 mix-blend-screen z-[-1]" autoplay loop muted playsinline>
+    <video preload="auto" class="fixed inset-0 w-full h-full object-cover opacity-10 mix-blend-screen z-[-1]" autoplay loop muted playsinline>
         <source src="/images/7581303-hd_1920_1080_30fps.mp4" type="video/mp4">
     </video>
 
@@ -65,8 +94,8 @@
     <nav class="glass-panel sticky top-0 z-50">
         <div class="max-w-7xl mx-auto px-6 py-4 flex justify-between items-center">
             <div class="flex items-center gap-3">
-                <span class="text-3xl filter drop-shadow-[0_0_10px_rgba(0,240,255,0.8)]">🤖</span>
-                <span class="font-display font-bold text-2xl">Intern<span class="text-[#00f0ff]">AI</span></span>
+                <span class="text-3xl filter drop-shadow-[0_0_10px_rgba(0,240,255,0.8)]">ðŸ¤–</span>
+                <span class="font-display font-bold text-2xl">Internship<span class="text-[#10b981]">Agent</span></span>
             </div>
             <div class="flex gap-6">
                 <a href="/profile" class="text-sm font-medium text-gray-300 hover:text-white">Profile</a>
@@ -83,14 +112,14 @@
                     <img src="/images/pexels-sora-shimazaki-5668863.jpg" class="w-full h-full object-cover rounded-full border-4 border-[#030305]" alt="Profile">
                 </div>
                 <h3 class="font-bold text-xl mb-1">Welcome Back!</h3>
-                <p class="text-sm text-[#00f0ff] font-medium mb-6">AI Profile Active</p>
+                <p class="text-sm text-[#00f0ff] font-medium mb-6">Profile Active</p>
                 <div class="flex gap-3 justify-center mb-6">
                     <span class="px-3 py-1 rounded-full bg-white/5 border border-white/10 text-xs">Python</span>
                     <span class="px-3 py-1 rounded-full bg-white/5 border border-white/10 text-xs">React</span>
                     <span class="px-3 py-1 rounded-full bg-white/5 border border-white/10 text-xs">AI</span>
                 </div>
                 <button id="startScanBtn" onclick="window.location.href='/bot'" class="w-full skeu-btn-primary py-3 rounded-xl font-bold flex justify-center items-center gap-2">
-                    <span class="text-xl">⚡</span> Start Live Scan
+                    <span class="text-xl">âš¡</span> Start Live Scan
                 </button>
             </div>
 
@@ -99,14 +128,14 @@
                 <h3 class="font-display font-bold text-2xl mb-2">Mock Interview</h3>
                 <p class="text-sm text-gray-400 mb-6">Practice with our advanced conversational AI before the real thing.</p>
                 <button class="w-full py-3 rounded-xl bg-white/10 border border-white/20 font-bold group-hover:bg-white/20 transition-colors">
-                    Start Session 🎙️
+                    Start Session ðŸŽ™ï¸
                 </button>
             </div>
             
             <div class="glass-panel rounded-3xl p-8">
                 <h3 class="font-bold text-lg mb-4">Generate Cover Letter</h3>
                 <button id="openCoverLetterModalBtn" class="w-full py-3 rounded-xl bg-gradient-to-r from-pink-500/20 to-purple-500/20 border border-pink-500/30 font-bold hover:bg-pink-500/30 transition-colors">
-                    Auto-Generate ✍️
+                    Auto-Generate âœï¸
                 </button>
             </div>
         </div>
@@ -127,7 +156,7 @@
                         <div class="w-14 h-14 rounded-xl bg-gradient-to-br from-blue-500 to-green-500 flex items-center justify-center font-bold text-2xl shadow-inner flex-shrink-0">G</div>
                         <div class="flex-1">
                             <h4 class="font-bold text-lg mb-1">Software Engineering Intern</h4>
-                            <p class="text-sm text-gray-400 mb-3">Google • Summer 2026 • Remote</p>
+                            <p class="text-sm text-gray-400 mb-3">Google â€¢ Summer 2026 â€¢ Remote</p>
                             <p class="text-xs text-gray-500 line-clamp-2">Join our engineering team to build scalable microservices. Requires experience in Python, algorithms, and data structures.</p>
                         </div>
                         <div class="flex flex-col items-end gap-3">
@@ -140,7 +169,7 @@
                         <div class="w-14 h-14 rounded-xl bg-gradient-to-br from-blue-600 to-blue-400 flex items-center justify-center font-bold text-2xl shadow-inner flex-shrink-0">M</div>
                         <div class="flex-1">
                             <h4 class="font-bold text-lg mb-1">AI Research Intern</h4>
-                            <p class="text-sm text-gray-400 mb-3">Meta • Fall 2026 • Hybrid</p>
+                            <p class="text-sm text-gray-400 mb-3">Meta â€¢ Fall 2026 â€¢ Hybrid</p>
                             <p class="text-xs text-gray-500 line-clamp-2">Work on cutting edge LLMs. Strong background in PyTorch and machine learning required.</p>
                         </div>
                         <div class="flex flex-col items-end gap-3">
@@ -156,8 +185,8 @@
     <!-- Cover Letter Modal -->
     <div id="coverLetterModal" class="fixed inset-0 z-[100] hidden items-center justify-center bg-black/70 backdrop-blur-md">
         <div class="glass-panel rounded-3xl p-8 w-full max-w-xl mx-4 relative border-white/20 shadow-[0_30px_60px_rgba(0,0,0,0.8)]">
-            <button id="closeCoverLetterModal" class="absolute top-6 right-6 w-8 h-8 rounded-full bg-white/10 flex items-center justify-center hover:bg-white/20 transition-colors">✕</button>
-            <h3 class="text-2xl font-bold mb-2">✉️ Generate Cover Letter</h3>
+            <button id="closeCoverLetterModal" class="absolute top-6 right-6 w-8 h-8 rounded-full bg-white/10 flex items-center justify-center hover:bg-white/20 transition-colors">âœ•</button>
+            <h3 class="text-2xl font-bold mb-2">âœ‰ï¸ Generate Cover Letter</h3>
             <p class="text-sm text-gray-400 mb-6">We'll tailor a letter using your uploaded resume data.</p>
             
                                     <div class="space-y-4 mb-6">
@@ -281,3 +310,4 @@
 
 </body>
 </html>
+
