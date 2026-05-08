@@ -1,4 +1,4 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
 <script src="https://cdn.tailwindcss.com"></script>
@@ -110,6 +110,7 @@ body{font-family:'Outfit',sans-serif;background:#0b0d17;color:var(--text);min-he
   background:linear-gradient(90deg,#10b981,#059669);color:#fff;margin-bottom:.8rem;box-shadow:0 8px 20px rgba(16,185,129,.2)
 }
 .btn-primary:hover{transform:translateY(-2px);box-shadow:0 12px 24px rgba(16,185,129,.35)}
+.btn-primary:disabled{background:rgba(255,255,255,0.05); color:var(--muted); border:1px solid rgba(255,255,255,0.05); cursor:not-allowed; box-shadow:none; transform:none;}
 .btn-secondary{
   background:transparent;color:var(--text);border:1px solid rgba(255,255,255,.1);
 }
@@ -372,8 +373,8 @@ body{font-family:'Outfit',sans-serif;background:#0b0d17;color:var(--text);min-he
         <div class="analyze-hint" id="uploadHint">Upload your PDF resume to instantly extract skills and launch a personalized interview.</div>
       </div>
 
-      <button class="action-btn btn-primary" onclick="startInterview(false)">
-        &#10042; Start General Interview (Choose Camera Mode) &rarr;
+      <button class="action-btn btn-primary" id="start-btn" onclick="startInterview(false)" disabled title="Please upload your resume first">
+        &#128274; Upload Resume to Unlock Interview &rarr;
       </button>
       <button class="action-btn btn-secondary" onclick="showHistory()">
         View Past Interview History
@@ -785,17 +786,80 @@ body{font-family:'Outfit',sans-serif;background:#0b0d17;color:var(--text);min-he
 
   async function predictWebcam() {
     if (!webcamRunning || !faceLandmarker) return;
-    const results = faceLandmarker.detectForVideo(roomVideo, performance.now());
-    if (results.faceLandmarks && results.faceLandmarks.length > 1) {
-      updateProctorHUD("Multiple people detected!");
+    
+    const startTimeMs = performance.now();
+    if (lastVideoTime !== roomVideo.currentTime) {
+      lastVideoTime = roomVideo.currentTime;
+      const results = faceLandmarker.detectForVideo(roomVideo, startTimeMs);
+      
+      if (results.faceLandmarks) {
+        if (results.faceLandmarks.length === 0) {
+          proctorTimers.noFace++;
+          if (proctorTimers.noFace > 60) { // Approx 2 seconds at 30fps
+            updateProctorHUD("Face not detected! Please stay in front of the camera.");
+            proctorTimers.noFace = 0;
+            logViolation("Face Missing");
+          }
+        } else if (results.faceLandmarks.length > 1) {
+          updateProctorHUD("Multiple people detected!");
+          logViolation("Multiple People");
+        } else {
+          proctorTimers.noFace = 0;
+          // Robust Head Pose / Gaze Detection logic
+          const landmarks = results.faceLandmarks[0];
+          // Landmark 4 is nose tip, 1 is chin, 33 left eye, 263 right eye
+          const nose = landmarks[4];
+          const leftEye = landmarks[33];
+          const rightEye = landmarks[263];
+          
+          // Calculate horizontal offset (yaw-ish)
+          const midX = (leftEye.x + rightEye.x) / 2;
+          const midY = (leftEye.y + rightEye.y) / 2;
+          const diffX = nose.x - midX;
+          const diffY = nose.y - midY;
+          
+          const thresholdX = 0.06; // Horizontal threshold
+          const thresholdY = 0.08; // Vertical threshold
+          
+          if (Math.abs(diffX) > thresholdX || Math.abs(diffY) > thresholdY) { 
+            proctorTimers.lookAway++;
+            if (proctorTimers.lookAway > 60) { // 2 seconds
+              updateProctorHUD("Please look directly at the screen!");
+              proctorTimers.lookAway = 0;
+              logViolation("Looking Away / Distracted");
+            }
+          } else {
+            proctorTimers.lookAway = 0;
+          }
+        }
+      }
     }
     window.requestAnimationFrame(predictWebcam);
+  }
+
+  function logViolation(type) {
+    if (!isInterviewActive) return;
+    const now = Date.now();
+    if (lastProctorWarning[type] && now - lastProctorWarning[type] < 5000) return; // Debounce 5s
+    
+    lastProctorWarning[type] = now;
+    proctoringSession.violations.push({ type, time: new Date().toLocaleTimeString() });
+    
+    const count = proctoringSession.violations.length;
+    const badge = document.getElementById('violation-badge');
+    badge.textContent = `⚠️ Violations: ${count}/3`;
+    badge.className = 'strike-badge strike-bg-warn';
+    
+    if (count >= 3) {
+      alert("Interview terminated due to multiple proctoring violations.");
+      endInterview();
+    }
   }
 
   function updateProctorHUD(msg) {
     const badge = document.getElementById('violation-badge');
     badge.className = 'strike-badge strike-bg-warn';
-    badge.textContent = "&#9888; Violation detected!";
+    badge.textContent = "⚠️ Violation detected!";
     const toast = document.createElement("div");
     toast.style.cssText = "position:fixed; top:2rem; left:50%; transform:translateX(-50%); background:rgba(239,68,68,0.95); padding:1rem 2rem; border-radius:30px; color:white; z-index:9999;";
     toast.textContent = msg;
@@ -818,6 +882,13 @@ body{font-family:'Outfit',sans-serif;background:#0b0d17;color:var(--text);min-he
       const data = await resp.json();
       userSkills = data.extractedSkills || userSkills;
       userRole = data.role || userRole;
+      resumeProfile = data; // Set profile to unlock
+      
+      const startBtn = document.getElementById('start-btn');
+      startBtn.disabled = false;
+      startBtn.innerHTML = "&#10042; Start Personalized Interview &rarr;";
+      startBtn.title = "";
+      
       document.getElementById('uploadHint').innerHTML = `<span style="color:#10b981">&#10003; Resume analyzed. Role: ${userRole}</span>`;
       setTimeout(() => {
         document.getElementById('scanOverlay').classList.remove('show');
