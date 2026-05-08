@@ -94,8 +94,8 @@ load_dotenv()
 
 app = Flask(
     __name__,
-    template_folder="internship_agent_v3",
-    static_folder="internship_agent_v3",
+    template_folder="internship_ai_agent",
+    static_folder="internship_ai_agent",
     static_url_path="/static"
 )
 CORS(app)
